@@ -1,0 +1,398 @@
+#|
+$Source $Yail
+|#
+
+(define-form appinventor.ai_shivalwolf.BTArduinoLED.Screen1 Screen1)
+(require <com.google.youngandroid.runtime>)
+(def (ValidateFields)
+(if (yail-equal?  (call-yail-primitive string-length (list (get-property txtred Text)
+)
+ '( text)
+ "length")
+ 0)
+ (begin (set-and-coerce-property! txtred 'Text "0" 'text)
+
+)
+)
+
+(if (yail-equal?  (call-yail-primitive string-length (list (get-property txtblue Text)
+)
+ '( text)
+ "length")
+ 0)
+ (begin (set-and-coerce-property! txtblue 'Text "0" 'text)
+
+)
+)
+
+(if (yail-equal?  (call-yail-primitive string-length (list (get-property txtgreen Text)
+)
+ '( text)
+ "length")
+ 0)
+ (begin (set-and-coerce-property! txtgreen 'Text "0" 'text)
+
+)
+)
+
+(if (and-delayed   (call-yail-primitive >= (list (get-property txtred Text)
+ 0)
+ '( number number)
+ ">=")
+ (call-yail-primitive <= (list (get-property txtred Text)
+ 255)
+ '( number number)
+ "<=")
+ (call-yail-primitive >= (list (get-property txtblue Text)
+ 0)
+ '( number number)
+ ">=")
+ (call-yail-primitive <= (list (get-property txtblue Text)
+ 255)
+ '( number number)
+ "<=")
+ (call-yail-primitive >= (list (get-property txtgreen Text)
+ 0)
+ '( number number)
+ ">=")
+ (call-yail-primitive <= (list (get-property txtgreen Text)
+ 255)
+ '( number number)
+ "<=")
+)
+ (begin (set-var! validfields  #t)
+
+)
+ (begin (call-component-method 'Notifier1 'ShowAlert (list "Values must be >= 0 and <= 255")
+ '( text)
+)
+
+(set-var! validfields  #f)
+
+)
+)
+
+ (get-var validfields)
+)
+(def recvtxt "")
+
+(def validfields #f)
+
+(def DeviceMAC "")
+
+(def (BTconnectDevice MACaddrofBTDevice )
+(if (call-component-method 'BluetoothClient1 'Connect (list (lexical-value MACaddrofBTDevice)
+)
+ '( text)
+)
+ (begin (set-and-coerce-property! btnConnect 'Text "Disconnect" 'text)
+
+(call-component-method 'Notifier1 'ShowAlert (list "Device Connected")
+ '( text)
+)
+
+)
+)
+
+ )
+;;; Screen1
+(do-after-form-creation (set-and-coerce-property! Screen1 'Title "Screen1" 'text)
+)
+(define-event Screen1 ErrorOccurred( component  functionName  errorNumber  message )
+ (if (call-yail-primitive string-contains (list (lexical-value component)
+ "BluetoothClient")
+ '( text text)
+ "contains")
+ (begin (set-and-coerce-property! Clock1 'TimerEnabled #f 'boolean)
+
+(call-component-method 'Notifier1 'ShowAlert (list (lexical-value message)
+)
+ '( text)
+)
+
+(call-component-method 'BluetoothClient1 'Disconnect (list)
+ '())
+
+(set-and-coerce-property! btnConnect 'Text "Connect" 'text)
+
+)
+ (begin (call-component-method 'Notifier1 'ShowAlert (list (call-yail-primitive string-append (list "An Error Occured in Component: " (lexical-value component)
+ "\nFunction: " (lexical-value functionName)
+ "\nError Number: " (lexical-value errorNumber)
+ "\nMessage: " (lexical-value message)
+)
+ '( text text text text text text text text)
+ "make text")
+)
+ '( text)
+)
+
+)
+)
+
+)
+(define-event Screen1 Initialize()
+ (set-and-coerce-property! btnConnect 'Enabled #f 'boolean)
+
+(set-var! DeviceMAC  (call-component-method 'TinyDB1 'GetValue (list "StoredDevice")
+ '( text)
+)
+)
+
+(if (call-yail-primitive > (list (call-yail-primitive string-length (list (get-var DeviceMAC)
+)
+ '( text)
+ "length")
+ 0)
+ '( number number)
+ ">")
+ (begin (if (call-component-method 'BluetoothClient1 'IsDevicePaired (list (get-var DeviceMAC)
+)
+ '( text)
+)
+ (begin (set-and-coerce-property! lstDevice 'Text (get-var DeviceMAC)
+ 'text)
+
+(set-and-coerce-property! btnConnect 'Enabled #t 'boolean)
+
+)
+ (begin (set-var! DeviceMAC  "")
+
+(call-component-method 'Notifier1 'ShowAlert (list "Saved Device Is not Paired")
+ '( text)
+)
+
+(call-component-method 'TinyDB1 'StoreValue (list "StoredDevice" "")
+ '( text any)
+)
+
+)
+)
+
+)
+)
+
+)
+;;; HorizontalArrangement1
+(add-component Screen1 HorizontalArrangement HorizontalArrangement1 (set-and-coerce-property! HorizontalArrangement1 'Width -2 'number)
+)
+;;; btnConnect
+(add-component HorizontalArrangement1 Button btnConnect (set-and-coerce-property! btnConnect 'Text "Connect" 'text)
+)
+(define-event btnConnect Click()
+ (if (get-property BluetoothClient1 IsConnected)
+ (begin (call-component-method 'BluetoothClient1 'Disconnect (list)
+ '())
+
+(set-and-coerce-property! btnConnect 'Text "Connect" 'text)
+
+(call-component-method 'Notifier1 'ShowAlert (list "Device Disconnected")
+ '( text)
+)
+
+)
+ (begin (if (yail-equal?  (get-property btnConnect Text)
+ "Connect")
+ (begin (if (call-yail-primitive > (list (call-yail-primitive string-length (list (get-var DeviceMAC)
+)
+ '( text)
+ "length")
+ 0)
+ '( number number)
+ ">")
+ (begin (set-and-coerce-property! Clock1 'TimerEnabled #t 'boolean)
+
+((get-var BTconnectDevice) (get-var DeviceMAC)
+)
+
+)
+ (begin (call-component-method 'Notifier1 'ShowAlert (list "You have not selected a Device To Connect To")
+ '( text)
+)
+
+)
+)
+
+)
+ (begin (set-and-coerce-property! Clock1 'TimerEnabled #f 'boolean)
+
+(call-component-method 'BluetoothClient1 'Disconnect (list)
+ '())
+
+(set-and-coerce-property! btnConnect 'Text "Connect" 'text)
+
+(call-component-method 'Notifier1 'ShowAlert (list "Device Disconnected")
+ '( text)
+)
+
+)
+)
+
+)
+)
+
+)
+;;; lstDevice
+(add-component HorizontalArrangement1 ListPicker lstDevice (set-and-coerce-property! lstDevice 'Text "Select Device" 'text)
+(set-and-coerce-property! lstDevice 'Width -2 'number)
+)
+(define-event lstDevice BeforePicking()
+ (call-component-method 'BluetoothClient1 'Disconnect (list)
+ '())
+
+(set-and-coerce-property! btnConnect 'Text "Connect" 'text)
+
+(set-and-coerce-property! lstDevice 'Elements (get-property BluetoothClient1 AddressesAndNames)
+ 'list)
+
+)
+(define-event lstDevice AfterPicking()
+ (set-var! DeviceMAC  (get-property lstDevice Selection)
+)
+
+(call-component-method 'TinyDB1 'StoreValue (list "StoredDevice" (get-var DeviceMAC)
+)
+ '( text any)
+)
+
+(set-and-coerce-property! lstDevice 'Text (get-var DeviceMAC)
+ 'text)
+
+(set-and-coerce-property! btnConnect 'Enabled #t 'boolean)
+
+)
+;;; TableArrangement1
+(add-component Screen1 TableArrangement TableArrangement1 (set-and-coerce-property! TableArrangement1 'Rows 4 'number)
+(set-and-coerce-property! TableArrangement1 'Width -2 'number)
+)
+;;; Label1
+(add-component TableArrangement1 Label Label1 (set-and-coerce-property! Label1 'Column 0 'number)
+(set-and-coerce-property! Label1 'Row 0 'number)
+(set-and-coerce-property! Label1 'Text "RED" 'text)
+(set-and-coerce-property! Label1 'TextAlignment 1 'number)
+)
+;;; txtred
+(add-component TableArrangement1 TextBox txtred (set-and-coerce-property! txtred 'Column 1 'number)
+(set-and-coerce-property! txtred 'Hint "number between 0 and 255" 'text)
+(set-and-coerce-property! txtred 'NumbersOnly #t 'boolean)
+(set-and-coerce-property! txtred 'Row 0 'number)
+(set-and-coerce-property! txtred 'Text "64" 'text)
+(set-and-coerce-property! txtred 'TextAlignment 1 'number)
+(set-and-coerce-property! txtred 'Width -2 'number)
+)
+;;; btnSEND
+(add-component TableArrangement1 Button btnSEND (set-and-coerce-property! btnSEND 'Column 1 'number)
+(set-and-coerce-property! btnSEND 'Row 3 'number)
+(set-and-coerce-property! btnSEND 'Text "SEND" 'text)
+)
+(define-event btnSEND Click()
+ (if ((get-var ValidateFields))
+ (begin (if (get-property BluetoothClient1 IsConnected)
+ (begin (call-component-method 'BluetoothClient1 'SendBytes (list (call-yail-primitive make-yail-list (list (get-property txtred Text)
+ (get-property txtgreen Text)
+ (get-property txtblue Text)
+)
+ '( any any any)
+ "make a list")
+)
+ '( list)
+)
+
+)
+ (begin (call-component-method 'Notifier1 'ShowAlert (list "Bluetooth Device not connected")
+ '( text)
+)
+
+)
+)
+
+)
+)
+
+)
+;;; txtgreen
+(add-component TableArrangement1 TextBox txtgreen (set-and-coerce-property! txtgreen 'Column 1 'number)
+(set-and-coerce-property! txtgreen 'Hint "number between 0 and 255" 'text)
+(set-and-coerce-property! txtgreen 'NumbersOnly #t 'boolean)
+(set-and-coerce-property! txtgreen 'Row 1 'number)
+(set-and-coerce-property! txtgreen 'Text "64" 'text)
+(set-and-coerce-property! txtgreen 'TextAlignment 1 'number)
+)
+;;; txtblue
+(add-component TableArrangement1 TextBox txtblue (set-and-coerce-property! txtblue 'Column 1 'number)
+(set-and-coerce-property! txtblue 'Hint "number between 0 and 255" 'text)
+(set-and-coerce-property! txtblue 'NumbersOnly #t 'boolean)
+(set-and-coerce-property! txtblue 'Row 2 'number)
+(set-and-coerce-property! txtblue 'Text "64" 'text)
+(set-and-coerce-property! txtblue 'TextAlignment 1 'number)
+(set-and-coerce-property! txtblue 'Width -2 'number)
+)
+;;; Label3
+(add-component TableArrangement1 Label Label3 (set-and-coerce-property! Label3 'Column 0 'number)
+(set-and-coerce-property! Label3 'Row 1 'number)
+(set-and-coerce-property! Label3 'Text "GREEN" 'text)
+(set-and-coerce-property! Label3 'TextAlignment 1 'number)
+)
+;;; Label2
+(add-component TableArrangement1 Label Label2 (set-and-coerce-property! Label2 'Column 0 'number)
+(set-and-coerce-property! Label2 'Row 2 'number)
+(set-and-coerce-property! Label2 'Text "BLUE" 'text)
+(set-and-coerce-property! Label2 'TextAlignment 1 'number)
+)
+;;; output
+(add-component Screen1 Label output (set-and-coerce-property! output 'Height -2 'number)
+(set-and-coerce-property! output 'Width -2 'number)
+)
+;;; BluetoothClient1
+(add-component Screen1 BluetoothClient BluetoothClient1 )
+;;; TinyDB1
+(add-component Screen1 TinyDB TinyDB1 )
+;;; Notifier1
+(add-component Screen1 Notifier Notifier1 )
+;;; Clock1
+(add-component Screen1 Clock Clock1 (set-and-coerce-property! Clock1 'TimerEnabled #f 'boolean)
+)
+(define-event Clock1 Timer()
+ (if (call-yail-primitive > (list (call-component-method 'BluetoothClient1 'BytesAvailableToReceive (list)
+ '())
+ 0)
+ '( number number)
+ ">")
+ (begin (while  (call-yail-primitive > (list (call-component-method 'BluetoothClient1 'BytesAvailableToReceive (list)
+ '())
+ 0)
+ '( number number)
+ ">")
+ (begin (set-var! recvtxt  (call-yail-primitive string-append (list (get-var recvtxt)
+ (call-component-method 'BluetoothClient1 'ReceiveText (list (call-component-method 'BluetoothClient1 'BytesAvailableToReceive (list)
+ '())
+)
+ '( number)
+)
+)
+ '( text text)
+ "join")
+)
+
+)
+)
+
+(set-and-coerce-property! output 'Text (call-yail-primitive string-append (list (call-component-method 'Clock1 'FormatDateTime (list (call-component-method 'Clock1 'Now (list)
+ '())
+)
+ '( InstantInTime)
+)
+ "\n" (get-var recvtxt)
+)
+ '( text text text)
+ "make text")
+ 'text)
+
+(set-var! recvtxt  "")
+
+)
+)
+
+)
+(init-runtime  #f)
+

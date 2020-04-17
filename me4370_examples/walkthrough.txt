@@ -1,0 +1,59 @@
+
+
+### programming the arduino in pure C
+### register level programming 
+### Tennessee Technological University - Tristan Hill - Dec 22, 2015
+
+# WINDOWS
+
+1) download winAVR from sourceforge - WinAVR-20100110-install
+2) install it
+
+3)attempt with arduino mega 2560
+
+$ avr-gcc -Os -DF_CPU=16000000UL -mmcu=atmega2560 -c -o led.o led.c
+$ avr-gcc -mmcu=atmega2560 led.o -o led
+$ avr-objcopy -O ihex -R .eeprom led led.hex
+$ avrdude -F -V -c arduino -p ATMEGA2560 -P COM2 -b 115200 -U flash:w:led.hex
+    -> stk_500_getsync(): not in sync: resp=0x00
+(alt)$  avrdude -p m2560 -c stk500v2 -P COM2 -b 115200 -F -U flash:w:led.hex
+    -> stk500_2_ReceiveMessage(): timeout
+
+
+3)attempt with arduino duemilanove
+
+
+tutorials
+https://balau82.wordpress.com/2011/03/29/programming-arduino-uno-in-pure-c/
+http://www.ladyada.net/learn/avr/setup-win.html
+
+
+
+
+4) using the Arduino IDE (v1.6.7)
+    -> this works! blink using registers
+###
+void setup() {
+  // initialize digital pin 13 as an output.
+  // pinMode(13, OUTPUT);
+  DDRB = B11111111;  // sets Arduino pins 1 to 8 as outputs 
+  
+}
+
+// the loop function runs over and over again forever
+void loop() {
+
+  PORTB=B11111111;
+  delay(500);              // wait for a second
+  PORTB=B00000000;
+  delay(500);              // wait for a second
+  
+}
+###
+
+
+
+5) still to do
+    -> ADC with registers
+    -> timer w registers
+    -> get gcc working (avrdude)    
