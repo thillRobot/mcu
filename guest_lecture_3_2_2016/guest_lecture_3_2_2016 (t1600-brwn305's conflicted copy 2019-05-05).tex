@@ -1,0 +1,74 @@
+% ME4370 - Mechatronics - Tristan Hill
+% Guest Lecture - March 2, 0216
+
+% Timing - MCUs and PCs - Deterministic vs. Non Deterministic 
+
+% Document settings
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[pdftex]{graphicx}
+\usepackage{multirow}
+\usepackage{setspace}
+\usepackage{hyperref}
+\usepackage{color,soul}
+\usepackage{fancyvrb}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{multicol}
+
+\pagestyle{plain}
+\setlength\parindent{0pt}
+\hypersetup{
+bookmarks=true,         % show bookmarks bar?
+unicode=false,          % non-Latin characters in Acrobat’s bookmarks
+pdftoolbar=true,        % show Acrobat’s toolbar?
+pdfmenubar=true,        % show Acrobat’s menu?
+pdffitwindow=false,     % window fit to page when opened
+pdfstartview={FitH},    % fits the width of the page to the window
+pdftitle={My title},    % title
+pdfauthor={Author},     % author
+pdfsubject={Subject},   % subject of the document
+pdfcreator={Creator},   % creator of the document
+pdfproducer={Producer}, % producer of the document
+pdfkeywords={keyword1} {key2} {key3}, % list of keywords
+pdfnewwindow=true,      % links in new window
+colorlinks=true,       % false: boxed links; true: colored links
+linkcolor=red,          % color of internal links (change box color with linkbordercolor)
+citecolor=green,        % color of links to bibliography
+filecolor=magenta,      % color of file links
+urlcolor=blue           % color of external links
+}
+
+
+\newcommand{\HSIZ}{3mm}
+\newcommand{\VSIZ}{3mm}
+
+\begin{document}
+    
+	\textbf{\LARGE ME 4370 - Mechatronics - Spring 2016}\\\\
+	\textbf{\LARGE {\it It is all about it Timing - PCs vs. MCUs}}\\
+	    \begin{description}
+        \item[\textbf{Overview}]\textbf{:}\\\\
+        
+            A microcontroller, or MCU is fundamentally different from a personal computer. MCUs are capable of operating on {\it precise} timing rountines while personal computers run on a {\it non-deterministic} timing. Therefore, one specialized capability of an MCU is precise timing of input and output as well as internal events. Personal computers cannot do this. 
+        
+        \item[\textbf{Measure Time}]\textbf{:}\\    
+            
+            How could we make a timer? Lets talk about some ideas. 
+                \begin{enumerate}
+                    \item moon and stars (sun)
+                    \item seasons
+                    \item sand, hourglass
+                    \item pendulum, time based on $\omega_n$ 
+                \end{enumerate}
+            
+            We use CRYSTALS !!! 
+            
+        \item[\textbf{Timing on a PC}]\textbf{:}\\  
+            Why does it take so long for a to PC application to load? What is going on in the background that we are not seeing? The short answer is, very many things all at once. 
+        
+    \end{description}
+\end{document}
+
+
+
