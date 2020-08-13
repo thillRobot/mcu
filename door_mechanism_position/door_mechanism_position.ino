@@ -1,7 +1,7 @@
 //
 // Tennessee Technological University
 // Tristan Hill - Jan 12, 2016 , updated May 05, 2020
-//              - again Aug 12, 2020 
+//              - again Aug 12, 2020, and the 13th too!
 
 // This script is for the Arduino Mega2560 in the 'Door Mechanism' control box
 // the arduino interfaces witht the Roboteq SDC2160 Motor Controller and receives 
@@ -111,16 +111,27 @@ void loop() {
   
   delay(500);
 
+  // get a value from the analog to digital converter - from a pot
   ADCSRA |= (1<<ADSC); //start conversions
   while (!(ADCSRA&B00010000)); // wait for conversion flag(ADIF)
   adc_val=ADCL>>6|ADCH<<2; // IMPORTANT !!! access ADCL before ADCH !!! 
-  
-//  Serial.println(val);
-  //OCR1B = val ; // 0-300
+
+  // map the adc signal to the reference input
   ref_counts=map(adc_val,0,1024,0,5000);
+  // calculate the error signal
   err_counts=(ref_counts-counts);
-  
-  mot_val=map(err_counts*2.0,-5000,5000,0,700);
+
+  // map from something to something else...
+  mot_val=map(err_counts*5.0,-5000,5000,0,700);
+
+  // apply saturation limits to control signal
+  if (mot_val<0){
+    mot_val=0;
+  } else if (mot_val>700)
+  {
+    mot_val=700;
+  }
+  // set the PWM duty cycle (0-1024)
   OCR1B=mot_val;
 
   Serial.println("Reference Counts:");
