@@ -1,7 +1,9 @@
+#a2d - Using the analog to digital converter with atmel 2560 (arduino mega)
+Tristan Hill - Dusted Off - March 19, 2021
 
+All of this code needs to be tested. Use at your own risk.  
 
-Using the analog to digital converter with atmel 2560 (arduino mega)
-Tristan Hill
+## basic routine for analog to digital read 
 
  1) choose voltage ref -> hardwire pin AREF to 5v 
  
