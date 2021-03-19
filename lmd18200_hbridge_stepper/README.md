@@ -13,9 +13,9 @@ List of Goals:
 Note: This IC was designed for running a DC motor and it has been adapted here for use with a standard bi-polar stepper
 
 **************** Wiring Diagram******************* 
-
-  MEGA2560                 LMD18200 (1)
-  ________                 ___________                     
+```
+  		MEGA2560           LMD18200 (1)
+  		________           ___________                     
 
                           pin1(bootstrap input1)<---> 10nF cap to pin2
                           pin2(motor output 1)  <---> stepper motor yellow (mercury motor SM42BYG011-25)
@@ -44,3 +44,4 @@ Note: This IC was designed for running a DC motor and it has been adapted here f
                           pin10(motor output 2) <---> stepper motor green
                           pin11(bootstrap input 2) <---> 10nF cap to pin10
 
+```
