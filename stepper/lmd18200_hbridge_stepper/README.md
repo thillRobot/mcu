@@ -3,13 +3,6 @@
 LMD18200 H-BRIDGE Interface for driving a Bi-Polar Stepper Motor
 Tristan Hill - March 06, 2019 - March 18,2021
 
-List of Goals:
-- [x] use ineterupts to control timing of pulse train 
-- [x] add position and velocity control functions
-- [x] integrate with ROS
-- [ ] improve this README
-- [ ] improve wiring diagram
-
 Note: This IC was designed for running a DC motor and it has been adapted here for use with a standard bi-polar stepper
 
 **************** Wiring Diagram******************* 
@@ -43,5 +36,12 @@ Note: This IC was designed for running a DC motor and it has been adapted here f
                           pin9(thermal flag)
                           pin10(motor output 2) <---> stepper motor green
                           pin11(bootstrap input 2) <---> 10nF cap to pin10
-
+                          
 ```
+
+List of Goals:
+- [x] use ineterupts to control timing of pulse train 
+- [x] add position and velocity control functions
+- [x] integrate with ROS
+- [ ] improve this README
+- [ ] improve wiring diagram
