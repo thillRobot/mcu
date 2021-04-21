@@ -90,6 +90,17 @@
     (nc)3v 
   Gnd---Gnd
  
+  BNO055 Board layout and Sensor Orientation
+  
+       +----------+
+       |         *| RST   PITCH  ROLL  HEADING
+   ADR |*        *| SCL
+   INT |*        *| SDA     ^            /->
+   PS1 |*        *| GND     |            |
+   PS0 |*        *| 3VO     Y    Z-->    \-X
+       |         *| VIN
+       +----------+
+
   
 */
 
@@ -176,16 +187,7 @@ void loop() {
   sensors_event_t event;
   bno.getEvent(&event);
 
-  /* Board layout:
-         +----------+
-         |         *| RST   PITCH  ROLL  HEADING
-     ADR |*        *| SCL
-     INT |*        *| SDA     ^            /->
-     PS1 |*        *| GND     |            |
-     PS0 |*        *| 3VO     Y    Z-->    \-X
-         |         *| VIN
-         +----------+
-  */
+
 
   /* The processing sketch expects data as roll, pitch, heading */
   Serial.print(F("Orientation: "));
