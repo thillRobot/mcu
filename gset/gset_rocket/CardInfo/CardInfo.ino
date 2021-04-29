@@ -1,4 +1,4 @@
-/*
+c /*
   SD card test
 
   This example shows how use the utility libraries on which the'
@@ -36,7 +36,7 @@ SdFile root;
 // Adafruit SD shields and modules: pin 10
 // Sparkfun SD shield: pin 8
 // MKRZero SD: SDCARD_SS_PIN
-const int chipSelect = 7; // pin 7 on MKR1010 (optional)
+const int chipSelect = 7; // pin 7 on MKR1010 
 
 void setup() {
   // Open serial communications and wait for port to open:

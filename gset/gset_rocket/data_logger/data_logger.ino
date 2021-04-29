@@ -3,31 +3,7 @@
   GSET - Data Acquisition Rocket - Summer 2021 - Tennessee Technological University
   Tristan Hill - April 20, 2021
   
-  This code began as example code from the Arduino library
-  The original example code 'DataLogger'  was modified for this project
-  created  24 Nov 2010
-  modified 9 Apr 2012
-  by Tom Igoe
-
-  Example code from the Arduino library BNO055 was also used. 
-  The example 'Bunny' has been modified for this project. 
-  
-  Modified by Tristan Hill - 06/24/2019 
-  To use this with the mega you have to use the wiring shown below
-  
-  Revised by Tristan Hill - 04/20/2021 - 04/24/2021
-  This year we switched to the MKR1010 Wifi board
-
-  BN0055 - working - values look good, not validated - 04/20/2021
-  
-  SD Card Breakout - working - data in files look good, not validated - 04/20/2021
-  
-  Caution:  This code is still a rough mashup of the two peices of example code, and much TLC is still need. 
-
-  - I have added all the sensors as shown in the example code "read_all_data"
-  
-  see README.md for hardware information and wiring diagrams - added 04/24/2021
-  
+  see README.md for version history and hardware information
 */
 
 #include <Wire.h>
@@ -39,9 +15,9 @@
 #include <SD.h>
 
 //const int chipSelect = 53; // used on MEGA
-const int chipSelect = 7; // used on MKR , not setting this  can cause the SD to write to ALMOST work
+const int chipSelect = 7; // used on MKR , not setting this can cause the SD to write to ALMOST work
 int entry_number = 0;
-int file_number = 0;
+int file_number = 2; // change this number to create a new file
 String file_string;
 
 /* Set the delay between fresh samples */
@@ -114,8 +90,6 @@ void setup() {
   file_string+= String(file_number);
   file_string+=".txt";
   
-
-  
 }
 
 void loop() {
@@ -141,9 +115,36 @@ void loop() {
   //bno.getEvent(&event);
 
   int8_t boardTemp = bno.getTemp();
-  Serial.println();
-  Serial.print(F("temperature: "));
-  Serial.println(boardTemp);
+  //Serial.println();
+  //Serial.print(F("Datalog: "));
+  //Serial.println(boardTemp);
+
+  String dataString = "";
+  // make a string for assembling the data to log:
+  dataString += "DataLog:";
+  dataString += String(entry_number);
+  dataString += ":";
+  dataString += "Temp:";
+  dataString += String(boardTemp);
+
+  // open the file. note that only one file can be open at a time,
+  // so you have to close this one before opening another.
+  File dataFile = SD.open(file_string, FILE_WRITE);
+
+  // if the file is available, write to it:
+  if (dataFile) {
+    dataFile.println(dataString);
+    dataFile.close();
+    // print to the serial port too:
+    Serial.println(dataString);
+  }
+  // if the file isn't open, pop up an error:
+  else {
+    Serial.println("error opening datalog file:");
+    Serial.println(file_string);
+  }
+
+  entry_number++;
   /*
   uint8_t system, gyro, accel, mag = 0;
   bno.getCalibration(&system, &gyro, &accel, &mag);
@@ -166,47 +167,43 @@ void loop() {
 void printEvent(sensors_event_t* event) {
   double x = -1000000, y = -1000000 , z = -1000000; //dumb values, easy to spot problem
 
+  String dataString = "";
   // make a string for assembling the data to log:
-  String dataString = "Data Log Entry Number:";
+  dataString += "DataLog:";
   dataString += String(entry_number);
-  
+  dataString += ":";
+
   if (event->type == SENSOR_TYPE_ACCELEROMETER) {
-    Serial.print("Accl:");
     x = event->acceleration.x;
     y = event->acceleration.y;
     z = event->acceleration.z;
     dataString += "Accl:";
   }
   else if (event->type == SENSOR_TYPE_ORIENTATION) {
-    Serial.print("Orient:");
     x = event->orientation.x;
     y = event->orientation.y;
     z = event->orientation.z;
     dataString += "Orient:";
   }
   else if (event->type == SENSOR_TYPE_MAGNETIC_FIELD) {
-    Serial.print("Mag:");
     x = event->magnetic.x;
     y = event->magnetic.y;
     z = event->magnetic.z;
     dataString += "Mag:";
   }
   else if (event->type == SENSOR_TYPE_GYROSCOPE) {
-    Serial.print("Gyro:");
     x = event->gyro.x;
     y = event->gyro.y;
     z = event->gyro.z;
     dataString += "Gyro:";
   }
   else if (event->type == SENSOR_TYPE_ROTATION_VECTOR) {
-    Serial.print("Rot:");
     x = event->gyro.x;
     y = event->gyro.y;
     z = event->gyro.z;
     dataString += "Rot:";
   }
   else if (event->type == SENSOR_TYPE_LINEAR_ACCELERATION) {
-    Serial.print("Linear:");
     x = event->acceleration.x;
     y = event->acceleration.y;
     z = event->acceleration.z;
@@ -217,15 +214,13 @@ void printEvent(sensors_event_t* event) {
     dataString += "Unk:";
   }
   
-
   dataString += String(x);
   dataString += ",";
   dataString += String(y);
   dataString += ",";
   dataString += String(z);
-  dataString += ",";
+  //dataString += "#";
   
-
   /*
   Serial.print("\tx= ");
   Serial.print(x);
@@ -234,8 +229,6 @@ void printEvent(sensors_event_t* event) {
   Serial.print(" |\tz= ");
   Serial.println(z);
   */
-  
-  //dataString="Test";
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
@@ -256,3 +249,5 @@ void printEvent(sensors_event_t* event) {
 
   entry_number++;
 }
+
+
