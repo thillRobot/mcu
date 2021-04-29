@@ -4,8 +4,8 @@
 
 ## History  
   - This code began as example code from the Arduino library
-  - The original example code 'DataLogger'  was modified for this project
   created 24 Nov 2010, modified 9 Apr 2012 by Tom Igoe
+  - The example code 'DataLogger' was modified for this project
   - Example code from the Arduino library BNO055 was also used. 
   - The example 'Bunny' has been modified for this project. 
   - Modified by Tristan Hill - 06/24/2019 

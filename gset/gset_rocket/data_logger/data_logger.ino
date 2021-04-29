@@ -17,7 +17,7 @@
 //const int chipSelect = 53; // used on MEGA
 const int chipSelect = 7; // used on MKR , not setting this can cause the SD to write to ALMOST work
 int entry_number = 0;
-int file_number = 2; // change this number to create a new file
+int file_number = 3; // change this number to create a new file
 String file_string;
 
 /* Set the delay between fresh samples */
@@ -94,22 +94,6 @@ void setup() {
 
 void loop() {
 
-  //could add VECTOR_ACCELEROMETER, VECTOR_MAGNETOMETER,VECTOR_GRAVITY...
-  sensors_event_t orientationData , angVelocityData , linearAccelData, magnetometerData, accelerometerData, gravityData;
-  bno.getEvent(&orientationData, Adafruit_BNO055::VECTOR_EULER);
-  bno.getEvent(&angVelocityData, Adafruit_BNO055::VECTOR_GYROSCOPE);
-  bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
-  bno.getEvent(&magnetometerData, Adafruit_BNO055::VECTOR_MAGNETOMETER);
-  bno.getEvent(&accelerometerData, Adafruit_BNO055::VECTOR_ACCELEROMETER);
-  bno.getEvent(&gravityData, Adafruit_BNO055::VECTOR_GRAVITY);
-
-  printEvent(&orientationData);
-  printEvent(&angVelocityData);
-  printEvent(&linearAccelData);
-  printEvent(&magnetometerData);
-  printEvent(&accelerometerData);
-  printEvent(&gravityData);
-
   /* Get a new sensor event */
   //sensors_event_t event;
   //bno.getEvent(&event);
@@ -121,11 +105,24 @@ void loop() {
 
   String dataString = "";
   // make a string for assembling the data to log:
-  dataString += "DataLog:";
+  dataString += "DataLog Entry:";
   dataString += String(entry_number);
-  dataString += ":";
-  dataString += "Temp:";
+  dataString += "\nBNO055 Temp:";
   dataString += String(boardTemp);
+
+  uint8_t system, gyro, accel, mag = 0;
+  bno.getCalibration(&system, &gyro, &accel, &mag);
+  //dataString += "DataLog:";
+  //dataString += String(entry_number);
+  //dataString += "\n";
+  dataString += "\nCalibration: Sys= ";
+  dataString += String(system);
+  dataString += ", Gyro=";
+  dataString += String(gyro);
+  dataString += ", Accel=";
+  dataString += String(accel);
+  dataString += ", Mag=";
+  dataString += String(mag);
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
@@ -144,20 +141,23 @@ void loop() {
     Serial.println(file_string);
   }
 
+   //could add VECTOR_ACCELEROMETER, VECTOR_MAGNETOMETER,VECTOR_GRAVITY...
+  sensors_event_t orientationData , angVelocityData , linearAccelData, magnetometerData, accelerometerData, gravityData;
+  bno.getEvent(&orientationData, Adafruit_BNO055::VECTOR_EULER);
+  bno.getEvent(&angVelocityData, Adafruit_BNO055::VECTOR_GYROSCOPE);
+  bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
+  bno.getEvent(&magnetometerData, Adafruit_BNO055::VECTOR_MAGNETOMETER);
+  bno.getEvent(&accelerometerData, Adafruit_BNO055::VECTOR_ACCELEROMETER);
+  bno.getEvent(&gravityData, Adafruit_BNO055::VECTOR_GRAVITY);
+
+  printEvent(&orientationData);
+  printEvent(&angVelocityData);
+  printEvent(&linearAccelData);
+  printEvent(&magnetometerData);
+  printEvent(&accelerometerData);
+  printEvent(&gravityData);
+
   entry_number++;
-  /*
-  uint8_t system, gyro, accel, mag = 0;
-  bno.getCalibration(&system, &gyro, &accel, &mag);
-  Serial.println();
-  Serial.print("Calibration: Sys=");
-  Serial.print(system);
-  Serial.print(" Gyro=");
-  Serial.print(gyro);
-  Serial.print(" Accel=");
-  Serial.print(accel);
-  Serial.print(" Mag=");
-  Serial.println(mag);
-  */
   
   Serial.println("--");
   delay(BNO055_SAMPLERATE_DELAY_MS);
@@ -169,9 +169,9 @@ void printEvent(sensors_event_t* event) {
 
   String dataString = "";
   // make a string for assembling the data to log:
-  dataString += "DataLog:";
-  dataString += String(entry_number);
-  dataString += ":";
+  //dataString += "DataLog:";
+  //dataString += String(entry_number);
+  //dataString += ":";
 
   if (event->type == SENSOR_TYPE_ACCELEROMETER) {
     x = event->acceleration.x;
@@ -219,16 +219,6 @@ void printEvent(sensors_event_t* event) {
   dataString += String(y);
   dataString += ",";
   dataString += String(z);
-  //dataString += "#";
-  
-  /*
-  Serial.print("\tx= ");
-  Serial.print(x);
-  Serial.print(" |\ty= ");
-  Serial.print(y);
-  Serial.print(" |\tz= ");
-  Serial.println(z);
-  */
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
@@ -247,7 +237,7 @@ void printEvent(sensors_event_t* event) {
     Serial.println(file_string);
   }
 
-  entry_number++;
+  //entry_number++;
 }
 
 
