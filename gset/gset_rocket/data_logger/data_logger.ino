@@ -14,7 +14,6 @@
 #include <SPI.h>
 #include <SD.h>
 
-//const int chipSelect = 53; // used on MEGA
 const int chipSelect = 7; // used on MKR , not setting this can cause the SD to write to ALMOST work
 int entry_number = 0;
 int file_number = 3; // change this number to create a new file
@@ -98,31 +97,16 @@ void loop() {
   //sensors_event_t event;
   //bno.getEvent(&event);
 
+  // get the board temp for the data entry header
   int8_t boardTemp = bno.getTemp();
-  //Serial.println();
-  //Serial.print(F("Datalog: "));
-  //Serial.println(boardTemp);
-
-  String dataString = "";
-  // make a string for assembling the data to log:
-  dataString += "DataLog Entry:";
-  dataString += String(entry_number);
-  dataString += "\nBNO055 Temp:";
-  dataString += String(boardTemp);
-
   uint8_t system, gyro, accel, mag = 0;
+
+  // instantiate a string for assembling the data entry header
+  String dataString = "";
+  dataString += "DataLog Entry:"+String(entry_number)+"\nBNO055 Temp:"+String(boardTemp);
+
   bno.getCalibration(&system, &gyro, &accel, &mag);
-  //dataString += "DataLog:";
-  //dataString += String(entry_number);
-  //dataString += "\n";
-  dataString += "\nCalibration: Sys= ";
-  dataString += String(system);
-  dataString += ", Gyro=";
-  dataString += String(gyro);
-  dataString += ", Accel=";
-  dataString += String(accel);
-  dataString += ", Mag=";
-  dataString += String(mag);
+  dataString += "\nCalibration: Sys= "+String(system)+", Gyro="+String(gyro)+", Accel="+String(accel)+", Mag="+String(mag);
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
@@ -156,10 +140,27 @@ void loop() {
   printEvent(&magnetometerData);
   printEvent(&accelerometerData);
   printEvent(&gravityData);
-
+  
+  dataString = "DataLog Entry:"+String(entry_number)+": Complete";
   entry_number++;
   
-  Serial.println("--");
+  // open the file. note that only one file can be open at a time,
+  // so you have to close this one before opening another.
+  dataFile = SD.open(file_string, FILE_WRITE);
+
+  // if the file is available, write to it:
+  if (dataFile) {
+    dataFile.println(dataString);
+    dataFile.close();
+    // print to the serial port too:
+    Serial.println(dataString);
+  }
+  // if the file isn't open, pop up an error:
+  else {
+    Serial.println("error opening datalog file:");
+    Serial.println(file_string);
+  }
+
   delay(BNO055_SAMPLERATE_DELAY_MS);
   
 }
@@ -167,11 +168,8 @@ void loop() {
 void printEvent(sensors_event_t* event) {
   double x = -1000000, y = -1000000 , z = -1000000; //dumb values, easy to spot problem
 
+  // instantiate a string for assembling the data log
   String dataString = "";
-  // make a string for assembling the data to log:
-  //dataString += "DataLog:";
-  //dataString += String(entry_number);
-  //dataString += ":";
 
   if (event->type == SENSOR_TYPE_ACCELEROMETER) {
     x = event->acceleration.x;
@@ -214,11 +212,8 @@ void printEvent(sensors_event_t* event) {
     dataString += "Unk:";
   }
   
-  dataString += String(x);
-  dataString += ",";
-  dataString += String(y);
-  dataString += ",";
-  dataString += String(z);
+  // append the data feild to the string separated by commas
+  dataString += String(x)+","+String(y)+","+String(z);
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
@@ -237,7 +232,6 @@ void printEvent(sensors_event_t* event) {
     Serial.println(file_string);
   }
 
-  //entry_number++;
 }
 
 
