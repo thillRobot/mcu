@@ -72,7 +72,7 @@
   Gnd---------Gnd
 ``` 
   
-#### Compile and Upload with Arduino-CLI
+#### Compile and Upload with `arduino-cli`
 
   Check for a connected board.
 ```
@@ -96,11 +96,9 @@
   After running the script the data file (.txt) should be on the SD card. Remove the card and inpect with a PC. If the filename defined in the script is a new name, then a new file will be created. If the filename defined in the script matches a file on the SD card, then that file will be appended with a new set of data entries.
 
 ## Changelog  
-  - This code began as example code from the Arduino library
-  created 24 Nov 2010, modified 9 Apr 2012 by Tom Igoe
+  - This code began as example code from the Arduino library created 24 Nov 2010, modified 9 Apr 2012 by Tom Igoe
   - The example code 'DataLogger' was modified for this project
-  - Example code from the Arduino library BNO055 was also used. 
-  - The example 'Bunny' has been modified for this project. 
+  - Example code 'Bunny' from the Arduino library BNO055 was also used. 
   - Modified by Tristan Hill - 06/24/2019 
   - Revised by Tristan Hill - 04/20/2021
   - switched to the MKR1010 Wifi board - 04/20/2021

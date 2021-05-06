@@ -17,15 +17,14 @@
 //#define BNO055_SAMPLERATE_DELAY_MS (100)
 #define LOOP_DELAY_MS (100)
 
-const int chipSelect = 7; // used on MKR , not setting this can cause the SD to write to ALMOST work
-int entry_number = 0;
-int file_number = 4; // change this number to create a new file
+const int chipSelect = 7; // used on MKR, not setting this can cause the SD to write to ALMOST work
+int entry_number = 0;     // number of the first row in the data file 
+int file_number = 5;      // change this number to create a new file
 String file_string;
 bool delete_file = false;
 
-// Check I2C device address and correct line below (by default address is 0x29 or 0x28)
-//                                   id, address
-Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
+// Check I2C device address and correct line below (by default address is 0x29 or 0x28)                                  
+Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28); // (id, address)
 
 /*************************************************************/
 /*  setup function 'setup'                                   */
@@ -76,66 +75,62 @@ void loop() {
 /*************************************************************/
 void initFile(void)
 {
-  String serial_buffer;
 
-  Serial.print("Initializing SD card...");
-
-  // see if the card is present and can be initialized:
+  Serial.println("Checking for SD Card...");
+  // check if the card is present and can be initialized
   if (!SD.begin(chipSelect)) {
-    Serial.println("Card failed, or not present");
-    // don't do anything more:
-    while (1);
+    Serial.println("SD card failed or not present");
+    while (1); // wait forever if card fails?
   }
-  Serial.println("card initialized.");
+  Serial.println("Card Initialized");
 
-  file_string="datalog"+String(file_number)+".txt";
+  file_string="datalog"+String(file_number)+".txt";  // global variable for now
 
   // check to see if the file already exists on the SD card
   if (SD.exists(file_string)&&delete_file)
   {
-    serial_buffer=file_string+" already exist. Deleting file before writing data.";
+    Serial.println(file_string+" already exist, deleting file before writing data");
     SD.remove(file_string);
   }else if(SD.exists(file_string))
   {
-    serial_buffer=file_string+" already exist. Data will be appended to file.";
-    SD.remove(file_string);
+    Serial.println(file_string+" already exist, data will be appended to file");
   }else
   {
-    serial_buffer=file_string+" does not exist. A new file will be created.";
+    Serial.println(file_string+" does not exist, a new file will be created");
   } 
-  Serial.println(serial_buffer);
+  //Serial.println(buffer);
 
   //instantiate a string for assembling the data file header
-  //String dataString = "";
-  String dataString = "Datalog Filename:"+ file_string;
+  String buffer= "GSET Datalog Filename: "+ file_string + "\r\n";
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
-  File dataFile = SD.open(file_string, FILE_WRITE);
+  File file_id = SD.open(file_string, FILE_WRITE);
 
-  // if the file is available, write to it:
-  if (dataFile) {
-    dataFile.println(dataString);
-    dataFile.close();
-    // print to the serial port too:
-    Serial.println(dataString);
+  // if the file is available, write the string to it:
+  if (file_id) {
+    file_id.println(buffer);
+    file_id.close(); //close the file before opening another.
   }
-  // if the file isn't open, pop up an error:
+  // if the file did not open, change the header message to an error:
   else {
-    Serial.println("error opening datalog file:");
-    Serial.println(file_string);
+    Serial.println("Error opening datalog file: "+file_string);
   }
+
+  // write the string to the serial output for debugging
+  Serial.println(buffer);
 
 }
 
-/*****************************************************************************/
-/*  Formats and writes the data entry header and calibration to file         */
-/*****************************************************************************/
+/**********************************************************/
+/*  Formats and writes the data entry to the file         */
+/**********************************************************/
 bool printData(void) {
-  // instanstiate objects for different sensor types 
-
+  
+  // print the entry number and calibration data before printing sensor data
   printHeader();
 
+  // instanstiate objects for different sensor types 
   sensors_event_t orientationData , angVelocityData , linearAccelData, magnetometerData, accelerometerData, gravityData;
   bno.getEvent(&orientationData, Adafruit_BNO055::VECTOR_EULER);
   bno.getEvent(&angVelocityData, Adafruit_BNO055::VECTOR_GYROSCOPE);
@@ -144,6 +139,7 @@ bool printData(void) {
   bno.getEvent(&accelerometerData, Adafruit_BNO055::VECTOR_ACCELEROMETER);
   bno.getEvent(&gravityData, Adafruit_BNO055::VECTOR_GRAVITY);
 
+  // print the bulk of the data to the file
   printEvent(&orientationData);
   printEvent(&angVelocityData);
   printEvent(&linearAccelData);
@@ -151,6 +147,7 @@ bool printData(void) {
   printEvent(&accelerometerData);
   printEvent(&gravityData);
 
+  // print a closing line after the sensor data
   printFooter();
 
   return true;
@@ -160,34 +157,33 @@ bool printData(void) {
 /*  Formats and writes the data entry header and calibration to file         */
 /*****************************************************************************/
 bool printHeader() {
-  // get the board temp for the data entry header
+  // get the BNO055 temp for the data entry header
   int8_t boardTemp = bno.getTemp();
+  // get the BNO055 calibration data (notice this way uses pointers?)
   uint8_t system, gyro, accel, mag = 0;
-
-  // instantiate a string for assembling the data entry header
-  //String dataString = "";
-  String dataString = "DataLog Entry:"+String(entry_number)+"\nBNO055 Temp:"+String(boardTemp);
-
   bno.getCalibration(&system, &gyro, &accel, &mag);
-  dataString += "\nCalibration: Sys= "+String(system)+", Gyro="+String(gyro)+", Accel="+String(accel)+", Mag="+String(mag);
 
-  // open the file. note that only one file can be open at a time,
-  // so you have to close this one before opening another.
-  File dataFile = SD.open(file_string, FILE_WRITE);
+  // instantiate and assemble a string for the data entry header
+  String buffer = "DataLog Entry:"+String(entry_number)+"\r\nBNO055 Temp:"+String(boardTemp);
+
+  // append the sensor calibration data to the string
+  buffer += "\r\nCalibration: Sys= "+String(system)+", Gyro="+String(gyro)+", Accel="+String(accel)+", Mag="+String(mag);
+
+  // open the file and instanstiate a file identifier object
+  File file_id = SD.open(file_string, FILE_WRITE);
 
   // if the file is available, write to it:
-  if (dataFile) {
-    dataFile.println(dataString);
-    dataFile.close();
-    // print to the serial port too:
-    Serial.println(dataString);
+  if (file_id) {
+    file_id.println(buffer);
+    file_id.close(); //close the file before opening another.
   }
-  // if the file isn't open, pop up an error:
+  // if the file did not open, change the header message to an error:
   else {
-    Serial.println("error opening datalog file:");
-    Serial.println(file_string);
+    Serial.println("Error opening datalog file: "+file_string);
   }
 
+  // write the string to the serial output for debugging
+  Serial.println(buffer);
   return true;
 }
 
@@ -196,26 +192,25 @@ bool printHeader() {
 /**************************************************************************/
 bool printFooter(void) {
   
-  String dataString = "DataLog Entry:"+String(entry_number)+": Complete";
-  // open the file. note that only one file can be open at a time,
-  // so you have to close this one before opening another.
-  File dataFile = SD.open(file_string, FILE_WRITE);
+  // instantiate and assemble a string for the data entry footer
+  String buffer = "DataLog Entry:"+String(entry_number)+": Complete";
+  
+  // open the file and instanstiate a file identifier object
+  File file_id = SD.open(file_string, FILE_WRITE);
 
-  // if the file is available, write to it:
-  if (dataFile) {
-    dataFile.println(dataString);
-    dataFile.close();
-    // print to the serial port too:
-    Serial.println(dataString);
+  // if the file is available, write the string to it:
+  if (file_id) {
+    file_id.println(buffer);
+    file_id.close(); //close the file before opening another
   }
-  // if the file isn't open, pop up an error:
+  // if the file did not open, change the message to an error
   else {
-    Serial.println("error opening datalog file:");
-    Serial.println(file_string);
+    Serial.println("Error opening datalog file: "+file_string);
   }
 
   entry_number++;
-
+  // write the string to the serial output for debugging
+  Serial.println(buffer);
   return true;
 }
 
@@ -223,71 +218,70 @@ bool printFooter(void) {
 /*  Formats and writes a single sensor event to file                         */
 /*****************************************************************************/
 void printEvent(sensors_event_t* event) {
-  double x = -1000000, y = -1000000 , z = -1000000; //dumb values, easy to spot problem
+  double x = -1000000, y = -1000000 , z = -1000000; //easy to spot dummy values
 
   // instantiate a string for assembling the data log
-  String dataString = "";
+  String buffer;
 
   if (event->type == SENSOR_TYPE_ACCELEROMETER) {
     x = event->acceleration.x;
     y = event->acceleration.y;
     z = event->acceleration.z;
-    dataString += "Accelerometer:";
+    buffer += "Accelerometer:";
   }
   else if (event->type == SENSOR_TYPE_ORIENTATION) {
     x = event->orientation.x;
     y = event->orientation.y;
     z = event->orientation.z;
-    dataString += "Orientation:";
+    buffer += "Orientation:";
   }
   else if (event->type == SENSOR_TYPE_MAGNETIC_FIELD) {
     x = event->magnetic.x;
     y = event->magnetic.y;
     z = event->magnetic.z;
-    dataString += "MagneticField:";
+    buffer += "MagneticField:";
   }
   else if (event->type == SENSOR_TYPE_GYROSCOPE) {
     x = event->gyro.x;
     y = event->gyro.y;
     z = event->gyro.z;
-    dataString += "SENSOR_TYPE_GYROSCOPE:";
+    buffer += "SENSOR_TYPE_GYROSCOPE:";
   }
   else if (event->type == SENSOR_TYPE_ROTATION_VECTOR) {
     x = event->gyro.x;
     y = event->gyro.y;
     z = event->gyro.z;
-    dataString += "RotationVector:";
+    buffer += "RotationVector:";
   }
   else if (event->type == SENSOR_TYPE_LINEAR_ACCELERATION) {
     x = event->acceleration.x;
     y = event->acceleration.y;
     z = event->acceleration.z;
-    dataString += "LinearAcceleration:";
+    buffer += "LinearAcceleration:";
   }
   else {
     Serial.print("Unknown:");
-    dataString += "Unknown:";
+    buffer += "Unknown:";
   }
   
   // append the data feild to the string separated by commas
-  dataString += String(x)+","+String(y)+","+String(z);
+  buffer += String(x)+","+String(y)+","+String(z);
 
-  // open the file. note that only one file can be open at a time,
-  // so you have to close this one before opening another.
-  File dataFile = SD.open(file_string, FILE_WRITE);
+  /// open the file and instanstiate a file identifier object
+  File file_id = SD.open(file_string, FILE_WRITE);
 
-  // if the file is available, write to it:
-  if (dataFile) {
-    dataFile.println(dataString);
-    dataFile.close();
-    // print to the serial port too:
-    Serial.println(dataString);
+  // if the file is available, write the string to it:
+  if (file_id) {
+    file_id.println(buffer);
+    file_id.close(); //close the file before opening another
   }
-  // if the file isn't open, pop up an error:
+  // if the file did not open, change the message to an error
   else {
-    Serial.println("error opening datalog file:");
-    Serial.println(file_string);
+    Serial.println("Error opening datalog file: "+file_string);
   }
+
+  // write the string to the serial output for debugging
+  Serial.println(buffer);
 
 }
 
