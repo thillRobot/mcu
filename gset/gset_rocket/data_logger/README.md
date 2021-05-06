@@ -16,6 +16,7 @@
   - added all the sensors as shown in the example code "read_all_data"
   - added and formatted README.md - 04/29/2021
   - added entry number and file number to data log format on SD card - 04/29/2021 
+  - restructured main loop by adding functions printHeader, printData, printFooter - 05/05/2021 
   
 ## Hardware Information
 
