@@ -13,14 +13,15 @@
 #include <SPI.h>
 #include <SD.h>
 
-const int chipSelect = 7; // used on MKR , not setting this can cause the SD to write to ALMOST work
-int entry_number = 0;
-int file_number = 3; // change this number to create a new file
-String file_string;
-
 // Set the delay between fresh samples 
 //#define BNO055_SAMPLERATE_DELAY_MS (100)
 #define LOOP_DELAY_MS (100)
+
+const int chipSelect = 7; // used on MKR , not setting this can cause the SD to write to ALMOST work
+int entry_number = 0;
+int file_number = 4; // change this number to create a new file
+String file_string;
+bool delete_file = false;
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
 //                                   id, address
@@ -35,21 +36,13 @@ void setup() {
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
-
-  Serial.print("Initializing SD card...");
-
-  // see if the card is present and can be initialized:
-  if (!SD.begin(chipSelect)) {
-    Serial.println("Card failed, or not present");
-    // don't do anything more:
-    while (1);
-  }
-  Serial.println("card initialized.");
+  
+  initFile();
 
   //Serial.begin(115200);
   Serial.println("Orientation Sensor Test"); Serial.println("");
 
-  /* Initialise the sensor */
+  /* Initialize the sensor */
   if(!bno.begin())
   {
     /* There was a problem detecting the BNO055 ... check your connections */
@@ -65,10 +58,6 @@ void setup() {
   /* Display some basic information on this sensor */
   displaySensorDetails();
 
-  file_string="Datalog";
-  file_string+= String(file_number);
-  file_string+=".txt";
-  
 }
 
 /*************************************************************/
@@ -76,14 +65,95 @@ void setup() {
 /*************************************************************/
 void loop() {
 
-  printHeader();
-
   printData();
-  
-  printFooter();
 
   delay(LOOP_DELAY_MS);
   
+}
+
+/*************************************************************/
+/*  this function 'initFile' opens a file for the datalog     */
+/*************************************************************/
+void initFile(void)
+{
+  String serial_buffer;
+
+  Serial.print("Initializing SD card...");
+
+  // see if the card is present and can be initialized:
+  if (!SD.begin(chipSelect)) {
+    Serial.println("Card failed, or not present");
+    // don't do anything more:
+    while (1);
+  }
+  Serial.println("card initialized.");
+
+  file_string="datalog"+String(file_number)+".txt";
+
+  // check to see if the file already exists on the SD card
+  if (SD.exists(file_string)&&delete_file)
+  {
+    serial_buffer=file_string+" already exist. Deleting file before writing data.";
+    SD.remove(file_string);
+  }else if(SD.exists(file_string))
+  {
+    serial_buffer=file_string+" already exist. Data will be appended to file.";
+    SD.remove(file_string);
+  }else
+  {
+    serial_buffer=file_string+" does not exist. A new file will be created.";
+  } 
+  Serial.println(serial_buffer);
+
+  //instantiate a string for assembling the data file header
+  //String dataString = "";
+  String dataString = "Datalog Filename:"+ file_string;
+
+  // open the file. note that only one file can be open at a time,
+  // so you have to close this one before opening another.
+  File dataFile = SD.open(file_string, FILE_WRITE);
+
+  // if the file is available, write to it:
+  if (dataFile) {
+    dataFile.println(dataString);
+    dataFile.close();
+    // print to the serial port too:
+    Serial.println(dataString);
+  }
+  // if the file isn't open, pop up an error:
+  else {
+    Serial.println("error opening datalog file:");
+    Serial.println(file_string);
+  }
+
+}
+
+/*****************************************************************************/
+/*  Formats and writes the data entry header and calibration to file         */
+/*****************************************************************************/
+bool printData(void) {
+  // instanstiate objects for different sensor types 
+
+  printHeader();
+
+  sensors_event_t orientationData , angVelocityData , linearAccelData, magnetometerData, accelerometerData, gravityData;
+  bno.getEvent(&orientationData, Adafruit_BNO055::VECTOR_EULER);
+  bno.getEvent(&angVelocityData, Adafruit_BNO055::VECTOR_GYROSCOPE);
+  bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
+  bno.getEvent(&magnetometerData, Adafruit_BNO055::VECTOR_MAGNETOMETER);
+  bno.getEvent(&accelerometerData, Adafruit_BNO055::VECTOR_ACCELEROMETER);
+  bno.getEvent(&gravityData, Adafruit_BNO055::VECTOR_GRAVITY);
+
+  printEvent(&orientationData);
+  printEvent(&angVelocityData);
+  printEvent(&linearAccelData);
+  printEvent(&magnetometerData);
+  printEvent(&accelerometerData);
+  printEvent(&gravityData);
+
+  printFooter();
+
+  return true;
 }
 
 /*****************************************************************************/
@@ -145,29 +215,6 @@ bool printFooter(void) {
   }
 
   entry_number++;
-
-  return true;
-}
-
-/*****************************************************************************/
-/*  Formats and writes the data entry header and calibration to file         */
-/*****************************************************************************/
-bool printData(void) {
-  // instanstiate objects for different sensor types 
-  sensors_event_t orientationData , angVelocityData , linearAccelData, magnetometerData, accelerometerData, gravityData;
-  bno.getEvent(&orientationData, Adafruit_BNO055::VECTOR_EULER);
-  bno.getEvent(&angVelocityData, Adafruit_BNO055::VECTOR_GYROSCOPE);
-  bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
-  bno.getEvent(&magnetometerData, Adafruit_BNO055::VECTOR_MAGNETOMETER);
-  bno.getEvent(&accelerometerData, Adafruit_BNO055::VECTOR_ACCELEROMETER);
-  bno.getEvent(&gravityData, Adafruit_BNO055::VECTOR_GRAVITY);
-
-  printEvent(&orientationData);
-  printEvent(&angVelocityData);
-  printEvent(&linearAccelData);
-  printEvent(&magnetometerData);
-  printEvent(&accelerometerData);
-  printEvent(&gravityData);
 
   return true;
 }
