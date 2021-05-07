@@ -1,8 +1,9 @@
-# GSET - Data Acquisition Rocket
-  Summer 2021 - Tennessee Technological University
-  Tristan Hill 
+# Data Logger 
+  Write sensor data to a csv file on an SD card                         
+  Tristan Hill - Tennessee Technological University- 2021                             
 
-## Overview - What is this project all about?
+## Overview
+  This program get sensor data and writes it to a .csv file on an SD card.
   
 ## Hardware Information
 

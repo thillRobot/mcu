@@ -1,7 +1,8 @@
 /****************************************************************************************/
-/*  GSET - Data Acquisition Rocket - Summer 2021 - Tennessee Technological University   */
+/*  data_logger - Tennessee Technological University                                    */
 /*  Tristan Hill - 2021                                                                 */
-/*                                                                                      */
+/*  Write sensor data to a csv file on an SD card                                       */    
+/*                                                                                      */                         
 /*  see README.md for version history and hardware information                          */          
 /****************************************************************************************/
 
