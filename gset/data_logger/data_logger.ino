@@ -20,7 +20,7 @@
 const int chipSelect = 7; // used on MKR, not setting this can cause the SD to write to ALMOST work
 int entry_number = 0;     // number of the first row in the data file 
 int file_number = 5;      // change this number to create a new file
-String file_string;
+String file_string;       // global variables - should this be done differently?
 bool delete_file = false;
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)                                  
