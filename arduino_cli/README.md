@@ -1,8 +1,7 @@
-# Using Arduino Command Line Interface, arduino-cli
+# Using Arduino Command Line Interface, `arduino-cli`
 
 This is a basic guide to using `arduino-cli` which follows the getting started page [here](https://arduino.github.io/arduino-cli/latest/getting-started/)
 Tristan Hill - May 29th, 2021
-
 
 This example uses the Arduino Nano 3.0 328p - Old Bootloader - `arduino:avr:nano:cpu=atmega328old`
 

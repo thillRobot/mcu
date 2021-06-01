@@ -82,6 +82,20 @@
            (nc)3v 
   Gnd---------Gnd
 ``` 
+
+#### Connections to NANO328
+```
+  NANO | MicroSD Breakout
+  
+  SS(10/14)-------CS (set this pin in software?)
+  SCK(13/17)-----CLK 
+  MOSI(11/15)-----D1
+  MISO(12/16)-----D0
+  
+  5v-----------5v
+           (nc)3v 
+  Gnd---------Gnd
+``` 
   
 #### Compile and Upload with `arduino-cli`
 
