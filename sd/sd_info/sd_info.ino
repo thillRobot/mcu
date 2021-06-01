@@ -19,8 +19,8 @@
   modified 9 Apr 2012
   by Tom Igoe
 
-   Modified by Tristan Hill - 06/24/2019 
- To use this with the mega you have to use the wiring shown below
+ Modified by Tristan Hill - 06/24/2019 
+ Wiring for MEGA2560
 
  MEGA|MicroSD Breakout
  
@@ -33,7 +33,20 @@
     (nc)3v 
  Gnd---Gnd
   
+ Wiring for NANO328p (v3.0) 
+ Nano|MicroSD Breakout
+ 
+ SS(10/14)-------CS (set this pin in software?)
+ SCK(13/17)-----CLK 
+ MOSI(11/15)-----D1
+ MISO(12/16)-----D0
+  
+ 5v-----------5v
+           (nc)3v 
+ Gnd---------Gnd
+
 */
+
 // include the SD library:
 #include <SPI.h>
 #include <SD.h>
@@ -48,11 +61,11 @@ SdFile root;
 // Adafruit SD shields and modules: pin 10
 // Sparkfun SD shield: pin 8
 // MKRZero SD: SDCARD_SS_PIN
-const int chipSelect = 53;
+const int chipSelect = 10; // for NANO328
 
 void setup() {
   // Open serial communications and wait for port to open:
-  Serial.begin(9600);
+  Serial.begin(38400);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
