@@ -1,8 +1,8 @@
 /****************************************************************************************/
-/*  data_logger - Tennessee Technological University                                    */
+/*  data_logger_BNO055 - Tennessee Technological University                             */
 /*  Tristan Hill - 2021                                                                 */
-/*  Write sensor data to a csv file on an SD card                                       */    
-/*                                                                                      */                         
+/*  Write sensor data from BNO055 to a csv file on an SD card                           */    
+/*  this is example was reduced so that it could run on a NANO328                       */                         
 /*  see README.md for version history and hardware information                          */          
 /****************************************************************************************/
 
@@ -10,19 +10,16 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
-
 #include <SPI.h>
 #include <SD.h>
 
-// Set the delay between fresh samples 
-//#define BNO055_SAMPLERATE_DELAY_MS (100)
-#define LOOP_DELAY_MS (100)
+#define LOOP_DELAY_MS 100 // main loop() delay
+#define CS_PIN 10         // 10 for nano, 7 used on MKR,
 
-const int chipSelect = 10; // 10 for nano, 7 used on MKR, not setting this can cause the SD to write to ALMOST work
 int entry_number = 0;     // number of the first row in the data file 
-int file_number = 5;      // change this number to create a new file
+int file_number = 3;      // change this number to create a new file
 String file_string;       // global variables - should this be done differently?
-bool delete_file = false;
+bool delete_file = true;  // true: create new file, false: append existing file
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)                                  
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28); // (id, address)
@@ -40,23 +37,25 @@ void setup() {
   initFile();
 
   //Serial.begin(115200);
-  Serial.println("Orientation Sensor Test"); Serial.println("");
+  //Serial.println("Orientation Sensor Test"); Serial.println("");
 
   /* Initialize the sensor */
+  //Serial.println("Debug 4");
   if(!bno.begin())
   {
+    //Serial.println("Debug 5");
     /* There was a problem detecting the BNO055 ... check your connections */
-    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+    Serial.print("BNO055 not detected, Check wiring or I2C address.");
     while(1);
   }
-   
+  //Serial.println("Debug 6");
   delay(1000);
 
   /* Use external crystal for better accuracy */
   bno.setExtCrystalUse(true);
    
   /* Display some basic information on this sensor */
-  displaySensorDetails();
+  //displaySensorDetails();
 
 }
 
@@ -65,6 +64,8 @@ void setup() {
 /*************************************************************/
 void loop() {
 
+  printHeader();
+  
   printData();
 
   delay(LOOP_DELAY_MS);
@@ -77,32 +78,36 @@ void loop() {
 void initFile(void)
 {
 
-  Serial.println("Checking for SD Card...");
+  //Serial.println("Checking for SD Card...");
   // check if the card is present and can be initialized
-  if (!SD.begin(chipSelect)) {
+  if (!SD.begin(CS_PIN)) {
     Serial.println("SD card failed or not present");
     while (1); // wait forever if card fails?
   }
-  Serial.println("Card Initialized");
+  Serial.println("SD card initialized");
 
   file_string="datalog"+String(file_number)+".txt";  // global variable for now
 
   // check to see if the file already exists on the SD card
   if (SD.exists(file_string)&&delete_file)
   {
-    Serial.println(file_string+" already exist, deleting file before writing data");
+    //Serial.println("Debug 1");
+    //Serial.println(file_string+" already exist, deleting file before writing data");
     SD.remove(file_string);
   }else if(SD.exists(file_string))
   {
-    Serial.println(file_string+" already exist, data will be appended to file");
+    //Serial.println("Debug 2");
+    //Serial.println(file_string+" already exist, data will be appended to file");
   }else
   {
-    Serial.println(file_string+" does not exist, a new file will be created");
+    //Serial.println("Debug 3");
+    //Serial.println(file_string+" does not exist, a new file will be created");
   } 
   //Serial.println(buffer);
+  
 
   //instantiate a string for assembling the data file header
-  String buffer= "GSET Datalog Filename: "+ file_string + "\r\n";
+  String buffer= "Data Logger BNO055 Filename: "+ file_string + "\r\n";
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
@@ -115,7 +120,7 @@ void initFile(void)
   }
   // if the file did not open, change the header message to an error:
   else {
-    Serial.println("Error opening datalog file: "+file_string);
+    Serial.println("Error opening file: "+file_string);
   }
 
   // write the string to the serial output for debugging
@@ -126,37 +131,40 @@ void initFile(void)
 /**********************************************************/
 /*  Formats and writes the data entry to the file         */
 /**********************************************************/
+
 bool printData(void) {
   
   // print the entry number and calibration data before printing sensor data
-  printHeader();
+  // printHeader();
 
   // instanstiate objects for different sensor types 
-  sensors_event_t orientationData , angVelocityData , linearAccelData, magnetometerData, accelerometerData, gravityData;
+  sensors_event_t orientationData , angVelocityData, linearAccelData, magnetometerData, accelerometerData, gravityData;
   bno.getEvent(&orientationData, Adafruit_BNO055::VECTOR_EULER);
   bno.getEvent(&angVelocityData, Adafruit_BNO055::VECTOR_GYROSCOPE);
   bno.getEvent(&linearAccelData, Adafruit_BNO055::VECTOR_LINEARACCEL);
-  bno.getEvent(&magnetometerData, Adafruit_BNO055::VECTOR_MAGNETOMETER);
-  bno.getEvent(&accelerometerData, Adafruit_BNO055::VECTOR_ACCELEROMETER);
-  bno.getEvent(&gravityData, Adafruit_BNO055::VECTOR_GRAVITY);
+  //bno.getEvent(&magnetometerData, Adafruit_BNO055::VECTOR_MAGNETOMETER);
+  //bno.getEvent(&accelerometerData, Adafruit_BNO055::VECTOR_ACCELEROMETER);
+  //bno.getEvent(&gravityData, Adafruit_BNO055::VECTOR_GRAVITY);
 
   // print the bulk of the data to the file
   printEvent(&orientationData);
   printEvent(&angVelocityData);
   printEvent(&linearAccelData);
-  printEvent(&magnetometerData);
-  printEvent(&accelerometerData);
-  printEvent(&gravityData);
+  //printEvent(&magnetometerData);
+  //printEvent(&accelerometerData);
+  //printEvent(&gravityData);
 
   // print a closing line after the sensor data
-  printFooter();
-
+  // printFooter();
+  entry_number++;
   return true;
 }
+
 
 /*****************************************************************************/
 /*  Formats and writes the data entry header and calibration to file         */
 /*****************************************************************************/
+
 bool printHeader() {
   // get the BNO055 temp for the data entry header
   int8_t boardTemp = bno.getTemp();
@@ -165,10 +173,8 @@ bool printHeader() {
   bno.getCalibration(&system, &gyro, &accel, &mag);
 
   // instantiate and assemble a string for the data entry header
-  String buffer = "DataLog Entry:"+String(entry_number)+"\r\nBNO055 Temp:"+String(boardTemp);
-
-  // append the sensor calibration data to the string
-  buffer += "\r\nCalibration: Sys= "+String(system)+", Gyro="+String(gyro)+", Accel="+String(accel)+", Mag="+String(mag);
+  String buffer = "DataLog Entry:"+String(entry_number)+"\r\nBNO055 Temp:"+String(boardTemp)
+    +"\r\nCalibration[Sys,Gyro,Accel,Mag]:"+String(system)+","+String(gyro)+","+String(accel)+","+String(mag);
 
   // open the file and instanstiate a file identifier object
   File file_id = SD.open(file_string, FILE_WRITE);
@@ -188,9 +194,11 @@ bool printHeader() {
   return true;
 }
 
+
 /**************************************************************************/
 /*  Formats and writes the data entry footer to file                      */
 /**************************************************************************/
+/*
 bool printFooter(void) {
   
   // instantiate and assemble a string for the data entry footer
@@ -214,12 +222,13 @@ bool printFooter(void) {
   Serial.println(buffer);
   return true;
 }
+*/
 
 /*****************************************************************************/
 /*  Formats and writes a single sensor event to file                         */
 /*****************************************************************************/
 void printEvent(sensors_event_t* event) {
-  double x = -1000000, y = -1000000 , z = -1000000; //easy to spot dummy values
+  float x = -1000000, y = -1000000 , z = -1000000; //easy to spot dummy values
 
   // instantiate a string for assembling the data log
   String buffer;
@@ -228,7 +237,7 @@ void printEvent(sensors_event_t* event) {
     x = event->acceleration.x;
     y = event->acceleration.y;
     z = event->acceleration.z;
-    buffer += "Accelerometer:";
+    String buffer = "Accelerometer:";
   }
   else if (event->type == SENSOR_TYPE_ORIENTATION) {
     x = event->orientation.x;
@@ -261,7 +270,7 @@ void printEvent(sensors_event_t* event) {
     buffer += "LinearAcceleration:";
   }
   else {
-    Serial.print("Unknown:");
+    //Serial.print("Unknown:");
     buffer += "Unknown:";
   }
   
@@ -278,7 +287,7 @@ void printEvent(sensors_event_t* event) {
   }
   // if the file did not open, change the message to an error
   else {
-    Serial.println("Error opening datalog file: "+file_string);
+    Serial.println("Error opening file: "+file_string);
   }
 
   // write the string to the serial output for debugging
@@ -290,6 +299,7 @@ void printEvent(sensors_event_t* event) {
 /*    Displays some basic information on this sensor from the unified     */
 /*    sensor API sensor_t type (see Adafruit_Sensor for more information) */   
 /**************************************************************************/
+/*
 void displaySensorDetails(void)
 {
   sensor_t sensor;
@@ -305,3 +315,4 @@ void displaySensorDetails(void)
   Serial.println("");
   delay(500);
 }
+*/

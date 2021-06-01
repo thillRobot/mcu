@@ -44,7 +44,19 @@
 ``` 
 #### Conections to MKR1010wifi     
 ```
-  MKR1010 | BNO055 Sensor Board
+  MKR | BNO055 Sensor Board
+  
+  SDA (11)-----SDA
+  SCL (12)-----SCL
+  
+  5v-----------Vin
+            (nc)3v 
+  Gnd----------Gnd     
+```
+
+#### Conections to NANO328p     
+```
+  NANO | BNO055 Sensor Board
   
   SDA (11)-----SDA
   SCL (12)-----SCL
@@ -134,3 +146,5 @@
   - added entry number and file number to data log format on SD card - 04/29/2021 
   - restructured main loop by adding functions printHeader, printData, printFooter - 05/05/2021 
   - more abstraction of structure, added initFile - 05/06/2021
+  - tested hardware on NANO328p - 05/31/2021
+  - added data_logger_BNO055, reduced version of data_logger to save code space on NANO - 06/01/2021
