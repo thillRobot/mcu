@@ -1,5 +1,5 @@
 /****************************************************************************************/
-/*  data_logger_BNO055 - Tennessee Technological University                             */
+/*  data_logger_nano - Tennessee Technological University                             */
 /*  Tristan Hill - 2021                                                                 */
 /*  Write sensor data from BNO055 to a csv file on an SD card                           */    
 /*  this is example was reduced so that it could run on a NANO328                       */                         
@@ -17,7 +17,7 @@
 #define CS_PIN 10         // 10 for nano, 7 used on MKR,
 
 int entry_number = 0;     // number of the first row in the data file 
-int file_number = 3;      // change this number to create a new file
+int file_number = 0;      // change this number to create a new file
 String file_string;       // global variables - should this be done differently?
 bool delete_file = true;  // true: create new file, false: append existing file
 
@@ -107,7 +107,7 @@ void initFile(void)
   
 
   //instantiate a string for assembling the data file header
-  String buffer= "Data Logger BNO055 Filename: "+ file_string + "\r\n";
+  String buffer= "Data Logger Nano Filename: "+ file_string + "\r\n";
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
@@ -173,7 +173,7 @@ bool printHeader() {
   bno.getCalibration(&system, &gyro, &accel, &mag);
 
   // instantiate and assemble a string for the data entry header
-  String buffer = "DataLog Entry:"+String(entry_number)+"\r\nBNO055 Temp:"+String(boardTemp)
+  String buffer = "Data Log Entry:"+String(entry_number)+"\r\nBNO055 Temp:"+String(boardTemp)
     +"\r\nCalibration[Sys,Gyro,Accel,Mag]:"+String(system)+","+String(gyro)+","+String(accel)+","+String(mag);
 
   // open the file and instanstiate a file identifier object
