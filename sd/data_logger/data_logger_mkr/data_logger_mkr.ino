@@ -14,15 +14,15 @@
 #include <SPI.h>
 #include <SD.h>
 
-// Set the delay between fresh samples 
+//Set the delay between fresh samples 
 //#define BNO055_SAMPLERATE_DELAY_MS (100)
 #define LOOP_DELAY_MS (100)
 
-const int chipSelect = 10; // 10 for nano, 7 used on MKR, not setting this can cause the SD to write to ALMOST work
+const int chipSelect = 7; // 10 for nano, 7 used on MKR, not setting this can cause the SD to write to ALMOST work
 int entry_number = 0;     // number of the first row in the data file 
-int file_number = 5;      // change this number to create a new file
+int file_number = 1;      // change this number to create a new file
 String file_string;       // global variables - should this be done differently?
-bool delete_file = false;
+bool delete_file = true;
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)                                  
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28); // (id, address)
@@ -102,7 +102,7 @@ void initFile(void)
   //Serial.println(buffer);
 
   //instantiate a string for assembling the data file header
-  String buffer= "GSET Datalog Filename: "+ file_string + "\r\n";
+  String buffer= "Data Logger MKR Filename: "+ file_string + "\r\n";
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
@@ -165,7 +165,7 @@ bool printHeader() {
   bno.getCalibration(&system, &gyro, &accel, &mag);
 
   // instantiate and assemble a string for the data entry header
-  String buffer = "DataLog Entry:"+String(entry_number)+"\r\nBNO055 Temp:"+String(boardTemp);
+  String buffer = "Data Entry:"+String(entry_number)+"\r\nBNO055 Temp:"+String(boardTemp);
 
   // append the sensor calibration data to the string
   buffer += "\r\nCalibration: Sys= "+String(system)+", Gyro="+String(gyro)+", Accel="+String(accel)+", Mag="+String(mag);
@@ -194,7 +194,7 @@ bool printHeader() {
 bool printFooter(void) {
   
   // instantiate and assemble a string for the data entry footer
-  String buffer = "DataLog Entry:"+String(entry_number)+": Complete";
+  String buffer = "Data Entry:"+String(entry_number)+": Complete";
   
   // open the file and instanstiate a file identifier object
   File file_id = SD.open(file_string, FILE_WRITE);
