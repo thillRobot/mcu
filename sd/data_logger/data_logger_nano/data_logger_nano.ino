@@ -1,5 +1,5 @@
 /****************************************************************************************/
-/*  data_logger_nano - Tennessee Technological University                             */
+/*  data_logger_nano - Tennessee Technological University                               */
 /*  Tristan Hill - 2021                                                                 */
 /*  Write sensor data from BNO055 to a csv file on an SD card                           */    
 /*  this is example was reduced so that it could run on a NANO328                       */                         
@@ -14,7 +14,9 @@
 #include <SD.h>
 
 #define LOOP_DELAY_MS 100 // main loop() delay
-#define CS_PIN 10         // 10 for nano, 7 used on MKR,
+//#define CS_PIN 10         // 10 for nano, 7 used on MKR,
+
+const int chip_select = 10;
 
 int entry_number = 0;     // number of the first row in the data file 
 int file_number = 0;      // change this number to create a new file
@@ -80,7 +82,7 @@ void initFile(void)
 
   //Serial.println("Checking for SD Card...");
   // check if the card is present and can be initialized
-  if (!SD.begin(CS_PIN)) {
+  if (!SD.begin(chip_select)) {
     Serial.println("SD card failed or not present");
     while (1); // wait forever if card fails?
   }

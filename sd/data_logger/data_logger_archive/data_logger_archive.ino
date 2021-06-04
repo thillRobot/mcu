@@ -14,7 +14,7 @@
 #include <SPI.h>
 #include <SD.h>
 
-const int chipSelect = 7; // used on MKR , not setting this can cause the SD to write to ALMOST work
+const int chipSelect = 10; // used on MKR , not setting this can cause the SD to write to ALMOST work
 int entry_number = 0;
 int file_number = 3; // change this number to create a new file
 String file_string;
@@ -49,9 +49,10 @@ void displaySensorDetails(void)
   delay(500);
 }
 */
+
 void setup() {
   // Open serial communications and wait for port to open:
-  Serial.begin(11520);
+  Serial.begin(38400);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
@@ -84,7 +85,7 @@ void setup() {
   bno.setExtCrystalUse(true);
    
   /* Display some basic information on this sensor */
-  displaySensorDetails();
+  // displaySensorDetails();
 
   file_string="datalog";
   file_string+= String(file_number);

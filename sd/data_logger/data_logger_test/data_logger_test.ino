@@ -18,9 +18,9 @@
 //#define BNO055_SAMPLERATE_DELAY_MS (100)
 #define LOOP_DELAY_MS (100)
 
-const int chipSelect = 7; // 10 for nano, 7 used on MKR, not setting this can cause the SD to write to ALMOST work
+const int chip_select = 10; // 10 for nano, 7 used on MKR, not setting this can cause the SD to write to ALMOST work
 int entry_number = 0;     // number of the first row in the data file 
-int file_number = 1;      // change this number to create a new file
+int file_number = 0;      // change this number to create a new file
 String file_string;       // global variables - should this be done differently?
 bool delete_file = true;
 
@@ -79,13 +79,13 @@ void initFile(void)
 
   Serial.println("Checking for SD Card...");
   // check if the card is present and can be initialized
-  if (!SD.begin(chipSelect)) {
+  if (!SD.begin(chip_select)) {
     Serial.println("SD card failed or not present");
     while (1); // wait forever if card fails?
   }
   Serial.println("Card Initialized");
 
-  file_string="testlog"+String(file_number)+".txt";  // global variable for now
+  file_string="datalog"+String(file_number)+".txt";  // global variable for now
 
   // check to see if the file already exists on the SD card
   if (SD.exists(file_string)&&delete_file)
