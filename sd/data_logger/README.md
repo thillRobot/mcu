@@ -109,19 +109,34 @@
   Gnd---------Gnd
 ``` 
   
-#### Compile and Upload with `arduino-cli`
+#### Compile and Upload with `arduino-cli` for MKR1010wifi
 
   Check for a connected board.
 ```
-  $ arduino-cli board list
+  arduino-cli board list
 ````
   Compile the script.
 ```  
-  $ arduino-cli compile --fqbn arduino:samd:mkrwifi1010 data_logger.ino 
+  arduino-cli compile --fqbn arduino:samd:mkrwifi1010 data_logger_mkr.ino 
 ```
   Upload the script to the board.
 ```
-  $ arduino-cli upload -p /dev/ttyACM0 --fqbn arduino:samd:mkrwifi1010 data_logger.ino
+  arduino-cli upload -p /dev/ttyACM0 --fqbn arduino:samd:mkrwifi1010 data_logger_mkr.ino
+```
+
+#### Compile and Upload with `arduino-cli` for NANO328p
+
+  Check for a connected board.
+```
+  arduino-cli board list
+````
+  Compile the script.
+```  
+  arduino-cli compile --fqbn arduino:avr:nano:cpu=atmega328 data_logger_nano.ino
+```
+  Upload the script to the board.
+```
+  arduino-cli upload -p /dev/ttyUSB0 --fqbn arduino:avr:nano:cpu=atmega328 data_logger_nano.ino
 ```
 
 #### testing 
@@ -131,6 +146,12 @@
   $ minicom ACM0      
 ```
   After running the script the data file (.txt) should be on the SD card. Remove the card and inpect with a PC. If the filename defined in the script is a new name, then a new file will be created. If the filename defined in the script matches a file on the SD card, then that file will be appended with a new set of data entries.
+
+  mount the SD card
+  ```
+  sudo mount -t vfat /dev/sdc1 /media/fat32 -o rw,uid=1000,gid=1000
+  
+  ```
 
 ## Changelog  
   - This code began as example code from the Arduino library created 24 Nov 2010, modified 9 Apr 2012 by Tom Igoe
@@ -148,3 +169,6 @@
   - more abstraction of structure, added initFile - 05/06/2021
   - tested hardware on NANO328p - 05/31/2021
   - added data_logger_BNO055, reduced version of data_logger to save code space on NANO - 06/01/2021
+  - changed names data_logger and data_logger_BNO055 to data_logger_mkr,nano,test,archive - 06/05/2021
+  - this code has grown to a point where it needs its own repository, goodbye /mcu - 06/05/2021
+  - see https://github.com/thillRobot/data-logger.git for the continuation of this project

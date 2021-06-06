@@ -20,7 +20,7 @@
 
 const int chipSelect = 7; // 10 for nano, 7 used on MKR, not setting this can cause the SD to write to ALMOST work
 int entry_number = 0;     // number of the first row in the data file 
-int file_number = 0;      // change this number to create a new file
+int file_number = 1;      // change this number to create a new file
 String file_string;       // global variables - should this be done differently?
 bool delete_file = true;
 
@@ -40,7 +40,7 @@ void setup() {
   initFile();
 
   //Serial.begin(115200);
-  Serial.println("Orientation Sensor Test"); Serial.println("");
+  Serial.println("Data Logger - MKR \n Initializing... "); Serial.println("");
 
   /* Initialize the sensor */
   if(!bno.begin())
@@ -85,7 +85,8 @@ void initFile(void)
   }
   Serial.println("Card Initialized");
 
-  file_string="datalog"+String(file_number)+".txt";  // global variable for now
+  //file_string="datalog"+String(file_number)+".txt";  // global variable for now
+  file_string="mkr-"+String(file_number)+".txt";  // global variable for now
 
   // check to see if the file already exists on the SD card
   if (SD.exists(file_string)&&delete_file)
@@ -102,7 +103,7 @@ void initFile(void)
   //Serial.println(buffer);
 
   //instantiate a string for assembling the data file header
-  String buffer= "Data Logger MKR Filename: "+ file_string + "\r\n";
+  String buffer= "Log Filename: "+ file_string + "\r\n";
 
   // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.

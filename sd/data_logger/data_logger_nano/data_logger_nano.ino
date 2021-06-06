@@ -208,7 +208,6 @@ bool printFooter(void) {
   
   // open the file and instanstiate a file identifier object
   File file_id = SD.open(file_string, FILE_WRITE);
-
   // if the file is available, write the string to it:
   if (file_id) {
     file_id.println(buffer);
@@ -218,7 +217,6 @@ bool printFooter(void) {
   else {
     Serial.println("Error opening datalog file: "+file_string);
   }
-
   entry_number++;
   // write the string to the serial output for debugging
   Serial.println(buffer);
