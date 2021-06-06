@@ -2,7 +2,8 @@
 /*  sensor/BNO055 - Tennessee Technological University                                  */
 /*  Tristan Hill - 2021                                                                 */
 /*  Access sensor data from BNO055 Absolute Orientation Module                          */    
-/*  This example was designed and tested on the NANO328p                                */           
+/*  This example is based on the example Adafruit_BNO055/read_all_data                  */
+/*  and it has been tested on the NANO328p (and the MKR1010)                            */      
 /****************************************************************************************/
 
 #include <Wire.h>
