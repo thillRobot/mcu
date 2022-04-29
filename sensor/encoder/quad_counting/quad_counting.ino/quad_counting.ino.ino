@@ -4,6 +4,8 @@
  *  Quadrature Encoder Counting
 */  
 
+// This code is somewhat broken, fix the counts rollover issue !
+
 // interrupt counters
 volatile uint8_t itp_4=0x00,itp_5=0x00;
 volatile int16_t counts=0,cps=0;
@@ -52,7 +54,7 @@ ISR(TIMER1_OVF_vect) {
     
     time_sec=time_sec+.0041/2.0; // need to figure this number out! 1/16e6*65536/2
     cps=counts/(.0041/2.0);
-    counts=0;
+    //counts=0; // this is a bad idea, this needs to be fixed!!!
 
 }
 
@@ -80,7 +82,7 @@ void setup() {
 
 void loop() {
 
-  delay(1000);
+  delay(10);
   Serial.print("counts: ");
   Serial.print(counts,DEC); 
   Serial.print("\n\n"); 

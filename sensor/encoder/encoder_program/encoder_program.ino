@@ -21,12 +21,14 @@ ISR(INT4_vect)
   if ((PINE & 0b00100000) == 0b00100000) encoder_cts++; // check if CH5 is leading CH4, if so, forward and inc
   else encoder_cts--; // else decrement
   ctr_4++;
+  delay(50);
 }
 ISR(INT5_vect)
 {
   if ((PINE & 0b00010000) == 0b00000000) encoder_cts++; // check if CH4 is lagging Ch5, if so forward and inc
   else encoder_cts--; // else decrement
   ctr_5++;
+  delay(50);
 }
 
 void setup() {
