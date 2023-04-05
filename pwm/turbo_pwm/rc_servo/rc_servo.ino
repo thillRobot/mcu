@@ -24,7 +24,18 @@ void setup() {
   pwm.timer(2, 2, 60000, false);   // Use timer 2 for pin 13, divide clock by 2, resolution 60000, dual-slope PWM
   pwm.enable(2,true);              // this gives PWM frequency of 50Hz (48000000/8/60000/2=50)
   //pwm.analogWrite(8, 500);         // PWM frequency is now 0.5Hz, dutycycle is 500 / 1000 * 100% = 50%
-  setServo(8,1500); // set PWM high time in microseconds
-}
 
-void loop() {}
+ }
+
+void loop() {
+
+  for(int i=1000;i<2000;i++){
+    setServo(8,i); // set PWM high time in microseconds
+    delay(100);
+  }
+  for(int i=2000;i>1000;i--){
+    setServo(8,i);
+    delay(100);
+  }
+
+}
