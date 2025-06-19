@@ -18,7 +18,7 @@ void setup() {
   TIMSK1  = 0b00000001; // overflow interrupt enable 
 
   // setup serial monitior
-  Serial.begin(9600);          //  setup serial
+  Serial.begin(115200);          //  setup serial
   while (! Serial);
   Serial.println("16-bit timer example");
 
