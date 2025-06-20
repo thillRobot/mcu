@@ -1,6 +1,12 @@
 /*
  * rosserial Publisher Example
  * Prints "hello world!"
+ * to test run the following
+ * ``` 
+ *   roscore
+ *   rosrun rosserial_arduino serial_node.py _port:=/dev/ttyUSB0
+ *   rostopic echo chatter
+ * ```
  */
 
 #include <ros.h>
