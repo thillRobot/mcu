@@ -21,13 +21,13 @@
  */
 void setup() { 
  //Initialize serial and wait for port to open:
-  Serial2.begin(115200); 
-  while (!Serial2) {
+  Serial1.begin(115200); 
+  while (!Serial1) {
     ; // wait for serial port to connect. Needed for Leonardo only
   }
   
   // prints title with ending line break 
-  Serial2.println("ASCII Table ~ Character Map"); 
+  Serial1.println("ASCII Table ~ Character Map"); 
 } 
 
 // first visible ASCIIcharacter '!' is number 33:
@@ -40,31 +40,31 @@ void loop() {
   // prints value unaltered, i.e. the raw binary version of the 
   // byte. The serial monitor interprets all bytes as 
   // ASCII, so 33, the first number,  will show up as '!' 
-  Serial2.write(thisByte);    
+  Serial1.write(thisByte);    
 
-  Serial2.print(", dec: "); 
+  Serial1.print(", dec: "); 
   // prints value as string as an ASCII-encoded decimal (base 10).
   // Decimal is the  default format for Serial.print() and Serial.println(),
   // so no modifier is needed:
-  Serial2.print(thisByte);      
+  Serial1.print(thisByte);      
   // But you can declare the modifier for decimal if you want to.
   //this also works if you uncomment it:
 
   // Serial.print(thisByte, DEC);  
 
 
-  Serial2.print(", hex: "); 
+  Serial1.print(", hex: "); 
   // prints value as string in hexadecimal (base 16):
-  Serial2.print(thisByte, HEX);     
+  Serial1.print(thisByte, HEX);     
 
-  Serial2.print(", oct: "); 
+  Serial1.print(", oct: "); 
   // prints value as string in octal (base 8);
-  Serial2.print(thisByte, OCT);     
+  Serial1.print(thisByte, OCT);     
 
-  Serial2.print(", bin: "); 
+  Serial1.print(", bin: "); 
   // prints value as string in binary (base 2) 
   // also prints ending line break:
-  Serial2.println(thisByte, BIN);   
+  Serial1.println(thisByte, BIN);   
 
   // if printed last visible character '~' or 126, stop: 
   if(thisByte == 126) {     // you could also use if (thisByte == '~') {

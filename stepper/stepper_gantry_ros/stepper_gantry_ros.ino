@@ -43,7 +43,17 @@ float oftime=0;
 char tmp [50]; // temp var and buffer for serial printing
 char buf [100];
 
-ros::NodeHandle  nh;
+
+// setup arduino rosserial on hardware Serial2 (tx2-pin16, rx2-pin17)
+class NewHardware : public ArduinoHardware
+{ 
+  public:
+  NewHardware():ArduinoHardware(&Serial2, 115200){};
+};
+// instantiate node handle on specified serial port
+ros::NodeHandle_<NewHardware>  nh;
+
+//ros::NodeHandle  nh;
 
 std_msgs::String str_msg;
 ros::Publisher chatter("chatter", &str_msg);
@@ -53,6 +63,7 @@ char hello[13] = "hello world!";
 // the setup function runs once when you press reset or power the board
 void setup() {
 
+  
   DDRB=0b11110000; // set Port B PB7:4 outputs
   DDRH=0b01100000; // set Port H PH6:5 to all outputs
   PORTB = 0b00000000;
@@ -67,7 +78,7 @@ void setup() {
   TCCR1B  = 0b00000001; //timer prescale = 1 (no prescale)
   TIMSK1  = 0b00000001; // overflow interrupt enable 
   
-  //Serial.begin(115200);
+  Serial.begin(115200);
 
   nh.initNode();
   nh.advertise(chatter);
@@ -75,10 +86,9 @@ void setup() {
 }
 
 void loop() {
-
-  float dt_check=0;  
-  float sum_dt=0;
-  float avg_dt;
+  
+  float dt_check, dt_check_lo, dt_check_hi;  
+  float sum_dt, avg_dt;
   
   float travel = 50; // (mm)
   float travel_rate = 10; // (mm/sec)
@@ -89,16 +99,21 @@ void loop() {
 
   float hi_time=1/(step_rate/2); // time up in seconds
   float lo_time=1/(step_rate/2); // time up in seconds
-  
+ 
   sprintf(buf,"dir: %i\n\r",dir);  
-  //Serial.print(buf);
+  Serial.print(buf);
 
   sprintf(buf,"n_steps: %i\n\n\r", n_steps);  
-  //Serial.print(buf);
+  Serial.print(buf);
+  
+  dtostrf(hi_time,15,12,tmp);  
+  sprintf(buf,"hi_time: %s\n\r",tmp);  
+  Serial.print(buf);
   
   dir=!dir; // toggle the direction 
   cnt=0;
 
+  sum_dt=0;
   for(int i=0;i<n_steps;i++){
     
     // set direction bits
@@ -106,32 +121,51 @@ void loop() {
 
     // toggle the step bits 
     PORTB^=(1<<4); // toggle bit PB4 (up?)
-    dt_check=isr_delay(hi_time); // step up for hi_time seconds
+    //delay(100);
+    dt_check_hi=isr_delay(hi_time); // step up for hi_time seconds
     //dt_check=dt_check+fine_delay(.004);
 
     PORTB^=(1<<4); // toggle bit PB4 (down?)
-    dt_check=isr_delay(lo_time)+dt_check; // step down for lo_time seconds
-    
-    sum_dt=sum_dt+dt_check; // calc total step time for debug
-
+    dt_check_lo=isr_delay(lo_time); // step down for lo_time seconds
+    //delay(100);
+    //sum_dt=sum_dt+dt_check; // calc total step time for debug
+    sum_dt=sum_dt+dt_check_hi+dt_check_lo;
+    //sum_dt=99.99;
+    // publish every 10 steps  
+    if (!(i%10)){
+      dtostrf(dt_check_hi,15,12,tmp);  
+      sprintf(buf,"dt_check_hi: %s\n\r",tmp);  
+      Serial.print(buf);
+      
+      avg_dt=sum_dt/(float)i;  // calculate average step time
+      dtostrf(dt_check_lo,15,12,tmp); // print for debug after traveling 
+      sprintf(buf,"avg_dt: %s\n\r",tmp);  
+      Serial.print(buf);
+      
+      str_msg.data = buf;
+      chatter.publish( &str_msg );
+      nh.spinOnce();
+    }
   } 
 
   avg_dt=sum_dt/n_steps;  // calculate average step time
-  
+    
   dtostrf(avg_dt,10,7,tmp); // print for debug after traveling 
-  sprintf(buf,"avg_dt: %s\n\r",tmp);  
-  //Serial.print(buf);
+  sprintf(buf,"\n\ravg_dt: %s\n\r",tmp);  
+  Serial.print(buf);
 
   dtostrf(get_time(),10,7,tmp);
   sprintf(buf,"curr_time: %s\n\n\r",tmp);  
-  //Serial.print(buf);
+  Serial.print(buf);
   
-  str_msg.data = hello;
-  chatter.publish( &str_msg );
-  nh.spinOnce();
-  isr_delay(hi_time);
-  //delay(1000);  
-  cnt++;
+  
+
+ // str_msg.data = hello;
+ // chatter.publish( &str_msg );
+ // nh.spinOnce();
+  //isr_delay(hi_time);
+//  delay(1000);  
+  //cnt++;
 }
 
 
