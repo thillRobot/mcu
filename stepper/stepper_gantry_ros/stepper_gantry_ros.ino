@@ -45,6 +45,7 @@ float oftime=0;
 char tmp [50]; // temp var and buffer for serial printing
 char buf [100];
 
+bool motors_enabled=false;
 
 // setup arduino rosserial on hardware Serial2 (tx2-pin16, rx2-pin17)
 class NewHardware : public ArduinoHardware
@@ -60,11 +61,25 @@ ros::NodeHandle_<NewHardware,5,5,1024,1024>  nh;
 //ros::NodeHandle  nh;
 
 // setup subscriber with callback function
-void messageCb( const std_msgs::Empty& toggle_msg){
+void messageCb( const std_msgs::Empty& enable_msg){
   digitalWrite(13, HIGH-digitalRead(13));   // blink the led
+ 
+  if (!motors_enabled){ 
+    DDRB=0b11110000; // set Port B PB7:4 outputs
+    DDRH=0b01100000; // set Port H PH6:5 to all outputs
+    PORTB = 0b00000000;
+    PORTH = 0b00000000;
+  }else{ 
+    DDRB=0b11110000; // set Port B PB7:4 outputs
+    DDRH=0b01100000; // set Port H PH6:5 to all outputs
+    PORTB = 0b11111111;
+    PORTH = 0b11111111;
+  } 
+  motors_enabled=!motors_enabled; // toggle the global flag
 }
 
-ros::Subscriber<std_msgs::Empty> sub("toggle_led", &messageCb );
+ros::Subscriber<std_msgs::Empty> sub("enable_motors", &messageCb );
+
 std_msgs::String str_msg;
 ros::Publisher chatter("chatter", &str_msg);
 
@@ -73,11 +88,11 @@ char hello[13] = "hello world!";
 // the setup function runs once when you press reset or power the board
 void setup() {
 
-  
-  DDRB=0b11110000; // set Port B PB7:4 outputs
-  DDRH=0b01100000; // set Port H PH6:5 to all outputs
-  PORTB = 0b00000000;
-  PORTH = 0b00000000;
+  motors_enabled=false;  
+  //DDRB=0b11110000; // set Port B PB7:4 outputs
+  //DDRH=0b01100000; // set Port H PH6:5 to all outputs
+//  PORTB = 0b00000000;
+ // PORTH = 0b00000000;
  
   cnt=0; // counter for loop()
   dir=0; // direction to step
