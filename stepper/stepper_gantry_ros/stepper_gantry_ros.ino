@@ -22,7 +22,8 @@
    
 */
 
-#include <ros.h>
+#include <ros.h>  
+//#include "ros.h" // use local copy
 #include <std_msgs/String.h>
 
                 // stepper motor and power screw parameters
@@ -50,8 +51,10 @@ class NewHardware : public ArduinoHardware
   public:
   NewHardware():ArduinoHardware(&Serial2, 115200){};
 };
+
+
 // instantiate node handle on specified serial port
-ros::NodeHandle_<NewHardware>  nh;
+ros::NodeHandle_<NewHardware,5,5,1024,1024>  nh;
 
 //ros::NodeHandle  nh;
 
@@ -91,7 +94,7 @@ void loop() {
   float sum_dt, avg_dt;
   
   float travel = 50; // (mm)
-  float travel_rate = 10; // (mm/sec)
+  float travel_rate = 20; // (mm/sec)
   float steps_per_mm= SPR/MMPR; //(steps/rev)/(mm/rev)->(steps/mm)
   float step_rate=travel_rate*steps_per_mm; //(mm/sec)*(steps/mm)->(steps/sec)
 
@@ -133,14 +136,18 @@ void loop() {
     //sum_dt=99.99;
     // publish every 10 steps  
     if (!(i%10)){
-      dtostrf(dt_check_hi,15,12,tmp);  
-      sprintf(buf,"dt_check_hi: %s\n\r",tmp);  
+
+      sprintf(buf,"step i: %i\n\r",i);  
       Serial.print(buf);
       
-      avg_dt=sum_dt/(float)i;  // calculate average step time
-      dtostrf(dt_check_lo,15,12,tmp); // print for debug after traveling 
-      sprintf(buf,"avg_dt: %s\n\r",tmp);  
-      Serial.print(buf);
+     // dtostrf(dt_check_hi,15,12,tmp);  
+     // sprintf(buf,"dt_check_hi: %s\n\r",tmp);  
+     // Serial.print(buf);
+      
+     // avg_dt=sum_dt/(float)i;  // calculate average step time
+     // dtostrf(dt_check_lo,15,12,tmp); // print for debug after traveling 
+     // sprintf(buf,"avg_dt: %s\n\r",tmp);  
+     // Serial.print(buf);
       
       str_msg.data = buf;
       chatter.publish( &str_msg );
@@ -150,9 +157,9 @@ void loop() {
 
   avg_dt=sum_dt/n_steps;  // calculate average step time
     
-  dtostrf(avg_dt,10,7,tmp); // print for debug after traveling 
-  sprintf(buf,"\n\ravg_dt: %s\n\r",tmp);  
-  Serial.print(buf);
+//  dtostrf(avg_dt,10,7,tmp); // print for debug after traveling 
+//  sprintf(buf,"\n\ravg_dt: %s\n\r",tmp);  
+//  Serial.print(buf);
 
   dtostrf(get_time(),10,7,tmp);
   sprintf(buf,"curr_time: %s\n\n\r",tmp);  
