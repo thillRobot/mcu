@@ -25,6 +25,7 @@
 #include <ros.h>  
 //#include "ros.h" // use local copy
 #include <std_msgs/String.h>
+#include <std_msgs/Empty.h>
 
                 // stepper motor and power screw parameters
 #define SPR 400 // steps per revolution, (steps/rev)
@@ -58,6 +59,12 @@ ros::NodeHandle_<NewHardware,5,5,1024,1024>  nh;
 
 //ros::NodeHandle  nh;
 
+// setup subscriber with callback function
+void messageCb( const std_msgs::Empty& toggle_msg){
+  digitalWrite(13, HIGH-digitalRead(13));   // blink the led
+}
+
+ros::Subscriber<std_msgs::Empty> sub("toggle_led", &messageCb );
 std_msgs::String str_msg;
 ros::Publisher chatter("chatter", &str_msg);
 
@@ -86,6 +93,8 @@ void setup() {
   nh.initNode();
   nh.advertise(chatter);
 
+  pinMode(13, OUTPUT);
+  nh.subscribe(sub);
 }
 
 void loop() {
