@@ -51,29 +51,26 @@ bool motors_enabled=false;
 class NewHardware : public ArduinoHardware
 { 
   public:
-  NewHardware():ArduinoHardware(&Serial2, 115200){};
+  NewHardware():ArduinoHardware(&Serial2, 500000){};
 };
 
-
 // instantiate node handle on specified serial port
-ros::NodeHandle_<NewHardware,5,5,1024,1024>  nh;
-
-//ros::NodeHandle  nh;
+ros::NodeHandle_<NewHardware,5,5,1024,1024>  nh; 
 
 // setup subscriber with callback function
 void messageCb( const std_msgs::Empty& enable_msg){
   digitalWrite(13, HIGH-digitalRead(13));   // blink the led
  
-  if (!motors_enabled){ 
+  if (!motors_enabled){ // enable the motors
     DDRB=0b11110000; // set Port B PB7:4 outputs
     DDRH=0b01100000; // set Port H PH6:5 to all outputs
     PORTB = 0b00000000;
     PORTH = 0b00000000;
-  }else{ 
-    DDRB=0b11110000; // set Port B PB7:4 outputs
-    DDRH=0b01100000; // set Port H PH6:5 to all outputs
-    PORTB = 0b11111111;
-    PORTH = 0b11111111;
+  }else{                // disable the motors
+    DDRB=0b00000000; // set Port B PB7:4 inputs
+    DDRH=0b00000000; // set Port H PH6:5 to all inputs
+    //PORTB = 0b11111111;
+    //PORTH = 0b11111111;
   } 
   motors_enabled=!motors_enabled; // toggle the global flag
 }
@@ -159,7 +156,7 @@ void loop() {
     sum_dt=sum_dt+dt_check_hi+dt_check_lo;
     //sum_dt=99.99;
     // publish every 10 steps  
-    if (!(i%10)){
+    if (!(i%100)){
 
       sprintf(buf,"step i: %i\n\r",i);  
       Serial.print(buf);
