@@ -105,8 +105,18 @@ void setup() {
   nh.initNode();
   nh.advertise(chatter);
 
+  // on board led for testing, replace pinmode fn soon
   pinMode(13, OUTPUT);
   nh.subscribe(sub);
+  
+  // setup portA for limit switches 0,1
+  DDRA=0b00000011; // bits 0,1 output for sw voltage, 2-7 inputs for sw detect
+  PORTA|=0b11111100; // internal pullups on bits 2-7
+  // setup PORTC for limit switche 2
+
+  DDRC=0b00000011; // bits 0,1 output for sw voltage, 2-7 inputs for sw detect
+  PORTC|=0b11111100; // internal pullups on bits 2-7
+
 }
 
 void loop() {
@@ -161,6 +171,8 @@ void loop() {
       sprintf(buf,"step i: %i\n\r",i);  
       Serial.print(buf);
       
+      Serial.println(PINA,BIN);     
+ 
      // dtostrf(dt_check_hi,15,12,tmp);  
      // sprintf(buf,"dt_check_hi: %s\n\r",tmp);  
      // Serial.print(buf);
@@ -174,6 +186,33 @@ void loop() {
       chatter.publish( &str_msg );
       nh.spinOnce();
     }
+
+    // check the limit switches each time
+    if (!(PINA&0b00000100)){
+      
+      dtostrf(get_time(),10,7,tmp);
+      sprintf(buf,"sw0 active at curr_time: %s\n\n\r",tmp);  
+      Serial.print(buf);
+    
+      Serial.println(PINA,BIN);     
+    }
+    if (!(PINA&0b00001000)){
+      
+      dtostrf(get_time(),10,7,tmp);
+      sprintf(buf,"sw1 active at curr_time: %s\n\n\r",tmp);  
+      Serial.print(buf);
+    
+      Serial.println(PINA,BIN);     
+    }
+    if (!(PINC&0b00000100)){
+      
+      dtostrf(get_time(),10,7,tmp);
+      sprintf(buf,"sw2 active at curr_time: %s\n\n\r",tmp);  
+      Serial.print(buf);
+    
+      Serial.println(PINC,BIN);     
+    }
+    
   } 
 
   avg_dt=sum_dt/n_steps;  // calculate average step time
