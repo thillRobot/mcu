@@ -42,6 +42,7 @@ int prescale=1;
 float ofdt;
 float oftime=0;
 float step_time, hi_time, lo_time;
+int step_cnt; 
 
 char tmp [50]; // temp var and buffer for serial printing
 char buf [100];
@@ -94,7 +95,7 @@ void setup() {
   //PORTH = 0b00000000;
  
   cnt=0; // counter for loop()
-  dir=0; // direction to step
+  dir=1; // direction to step
   dt=5;  // time delay between steps (micro seconds)
 
   // setup Timer 1 (16bit)
@@ -118,6 +119,11 @@ void setup() {
 
   DDRC=0b00000011; // bits 0,1 output for sw voltage, 2-7 inputs for sw detect
   PORTC|=0b11111100; // internal pullups on bits 2-7
+
+  delay(100);
+  home_axis(0);
+  //step_axis(200,10,0,0);
+  delay(1000);
 
 }
 
@@ -147,28 +153,14 @@ void loop() {
   sprintf(buf,"hi_time: %s\n\r",tmp);  
   Serial.print(buf);
   
- 
-  dir=!dir; // toggle the direction 
   cnt=0;
 
   set_step_rate(step_rate, dir, 0);
-
+  dir=!dir; // toggle the direction 
+  
   sum_dt=0;
   for(int i=0;i<n_steps;i++){
     
-    // set direction bits
-    PORTB^=(-dir^PORTB)&(0b00100000); // set direction for PB5
-
-    // toggle the step bits 
-    //PORTB^=(1<<4); // toggle bit PB4 (up?)
-    //delay(100);
-    //dt_check_hi=isr_delay(hi_time); // step up for hi_time seconds
-    //dt_check=dt_check+fine_delay(.004);
-
-    //PORTB^=(1<<4); // toggle bit PB4 (down?)
-    //dt_check_lo=isr_delay(lo_time); // step down for lo_time seconds
-    //delay(100);
-    //sum_dt=sum_dt+dt_check; // calc total step time for debug
 
     dt_check_lo=isr_delay(hi_time+lo_time); // wait for lo_time seconds
     sum_dt=sum_dt+dt_check_hi+dt_check_lo;
@@ -247,55 +239,60 @@ void loop() {
 // ********************************************************************************
 // Subroutines (functions) defined below
 // ********************************************************************************
-/*
+
 // function to home the xyz axes using the limit switches
-void home_axes(void){
+void home_axis(int axis){
 
-  bool homing=true;
+  enable_motors();
 
-  while(homing){
+  set_travel_rate(10, 0, 0);
+
+  while(PINA&0b00000100);
     
+  step_axis(500,10,1,0);
+  
+  disable_motors();    
 
 
+}
+
+// function to move to axes by defined number of steps
+
+void step_axis(int steps, float travel_rate, bool direction, int axis){
+
+  step_cnt=0;
+  set_travel_rate(travel_rate, direction, 0);
+
+  while (step_cnt<steps){
+    sprintf(buf,"step_cnt: %i\n\r",step_cnt);  
+    Serial.print(buf);
   }
+  
+  disable_motors();
 
-}*/
+}
 
-/* // THIS MAY NOT BE NEEDED
+
 // function to set the travel rate of a given axis
-void set_travel_rate(float travel_rate, int dir, int axis){
+void set_travel_rate(float travel_rate, bool direction, int axis){
  
   // float travel_rate = 20; // (mm/sec)
   float steps_per_mm= SPR/MMPR; //(steps/rev)/(mm/rev)->(steps/mm)
   float step_rate=travel_rate*steps_per_mm; //(mm/sec)*(steps/mm)->(steps/sec)
 
-  //int n_steps=travel*steps_per_mm;  // (mm)*(steps/mm)->(steps)
+  set_step_rate(step_rate, direction, axis);
+}
 
-  float hi_time=1/(step_rate/2); // time up in seconds
-  float lo_time=1/(step_rate/2); // time up in seconds
- 
-  sprintf(buf,"dir: %i\n\r",dir);  
-  Serial.print(buf);
-
-  sprintf(buf,"n_steps: %i\n\n\r", n_steps);  
-  Serial.print(buf);
-  
-  dtostrf(hi_time,15,12,tmp);  
-  sprintf(buf,"hi_time: %s\n\r",tmp);  
-  Serial.print(buf);
-
-  set_step_rate(step_rate)
-}*/
 
 // function to set the step rate and direction of a given axis, work in progress
 void set_step_rate(float step_rate, bool direction, int axis){
 
-  direction=true;
+  enable_motors();
+
+  //direction=true;
 
   step_time=0; // start the step timer
-  //PORTB^=(-direction^PORTB)&(0b00100000); // set direction for PB5 
-  //int dir=-1;
-  //PORTB^=(-dir^PORTB)&(0b00100000); // set direction for PB5
+  PORTB^=(-direction^PORTB)&(0b00100000); // set direction for PB5 
   
   // set the global time values to be used in ISR
   hi_time=1/(step_rate/2); // time up in seconds
@@ -422,6 +419,7 @@ ISR(TIMER1_OVF_vect) {
     PORTB&=0b11101111; // bit 4 lo
   }else{
     step_time=0; // reset timer for next step
+    step_cnt++; // increment the global step counter
   }
 
 }
