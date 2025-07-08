@@ -37,12 +37,23 @@ bool dir;
 int c_time=0;
 //volatile uint16_t ofcnt=0;
 //volatile float   time_sec=0;
-uint16_t ofcnt=0;
 int prescale=1;
 float ofdt;
-float oftime=0;
-float step_time, hi_time, lo_time;
-int step_cnt; 
+
+uint16_t ofcnt_x=0;
+float oftime_x=0;
+float step_time_x, hi_time_x, lo_time_x;
+int step_cnt_x; 
+
+uint16_t ofcnt_y=0;
+float oftime_y=0;
+float step_time_y, hi_time_y, lo_time_y;
+int step_cnt_y; 
+
+uint16_t ofcnt_z=0;
+float oftime_z=0;
+float step_time_z, hi_time_z, lo_time_z;
+int step_cnt_z; 
 
 char tmp [50]; // temp var and buffer for serial printing
 char buf [100];
@@ -52,11 +63,11 @@ bool motors_enabled=false;
 // function prototypes
 float get_time(void);
 
-void enable_motors(void);
+void enable_motors(char *axis);
 
-void disable_motors(void);
+void disable_motors(char *axis);
 
-// setup arduino rosserial on hardware Serial2 (tx2-pin16, rx2-pin17)
+// setup arduino rosserial on hardware serial2 (tx2-pin16, rx2-pin17)
 class NewHardware : public ArduinoHardware
 { 
   public:
@@ -71,9 +82,9 @@ void messageCb( const std_msgs::Empty& enable_msg){
   digitalWrite(13, HIGH-digitalRead(13));   // blink the led
  
   if (!motors_enabled){ // enable the motors
-    enable_motors();
+    enable_motors("X");
   }else{                // disable the motors
-    disable_motors();
+    disable_motors("X");
   } 
   motors_enabled=!motors_enabled; // toggle the global flag
 }
@@ -85,14 +96,14 @@ ros::Publisher chatter("chatter", &str_msg);
 
 char hello[13] = "hello world!";
 
-// the setup function runs once when you press reset or power the board
+// the setup PORTH&=~((1<<5)|(1<<3));function runs once when you press reset or power the board
 void setup() {
 
   motors_enabled=false;  
-  //DDRB=0b11110000; // set Port B PB7:4 outputs
-  //DDRH=0b01100000; // set Port H PH6:5 to all outputs
-  //PORTB = 0b00000000;
-  //PORTH = 0b00000000;
+  DDRB=0b00000000; // set Port B PB7:4 outputs
+  DDRH=0b00000000; // set Port H PH6:5 to all outputs
+  PORTB = 0b00000000;
+  PORTH = 0b00000000;
  
   cnt=0; // counter for loop()
   dir=1; // direction to step
@@ -102,6 +113,16 @@ void setup() {
   TCCR1A  = 0b00000000; 
   TCCR1B  = 0b00000001; //timer prescale = 1 (no prescale)
   TIMSK1  = 0b00000001; // overflow interrupt enable 
+  
+  // setup Timer 3 (16bit)
+  TCCR3A  = 0b00000000; 
+  TCCR3B  = 0b00000001; //timer prescale = 1 (no prescale)
+  TIMSK3  = 0b00000001; // overflow interrupt enable 
+  
+  // setup Timer 5 (16bit)
+  TCCR5A  = 0b00000000; 
+  TCCR5B  = 0b00000001; //timer prescale = 1 (no prescale)
+  TIMSK5  = 0b00000001; // overflow interrupt enable 
   
   Serial.begin(115200);
 
@@ -121,9 +142,18 @@ void setup() {
   PORTC|=0b11111100; // internal pullups on bits 2-7
 
   delay(100);
-  home_axis(0);
-  //step_axis(200,10,0,0);
-  delay(1000);
+  //disable_motors("X");
+  //disable_motors("Z");
+  //enable_motors("X");
+  enable_motors("Y");
+  home_axis("Y");
+  disable_motors("Y");
+  delay(500);
+
+  enable_motors("Y");
+  step_axis(20,10,0,"Y");
+  disable_motors("Y");
+  delay(500);
 
 }
 
@@ -133,38 +163,45 @@ void loop() {
   float sum_dt, avg_dt;
     
   //bool step_dir= 0;
-  float travel = 50; // (mm)
+  float travel = 20; // (mm)
   float travel_rate = 10; // (mm/sec)
   float steps_per_mm= SPR/MMPR; //(steps/rev)/(mm/rev)->(steps/mm)
   float step_rate=travel_rate*steps_per_mm; //(mm/sec)*(steps/mm)->(steps/sec)
 
   int n_steps=travel*steps_per_mm;  // (mm)*(steps/mm)->(steps)
 
-  hi_time=1/(step_rate/2); // time up in seconds
-  lo_time=1/(step_rate/2); // time up in seconds
+  hi_time_x=1/(step_rate/2); // time up in seconds
+  lo_time_x=1/(step_rate/2); // time up in seconds
  
+  hi_time_y=1/(step_rate/2); // time up in seconds
+  lo_time_y=1/(step_rate/2); // time up in seconds
+  
+  hi_time_z=1/(step_rate/2); // time up in seconds
+  lo_time_z=1/(step_rate/2); // time up in seconds
+  
   sprintf(buf,"dir: %i\n\r",dir);  
   Serial.print(buf);
 
   sprintf(buf,"n_steps: %i\n\n\r", n_steps);  
   Serial.print(buf);
   
-  dtostrf(hi_time,15,12,tmp);  
-  sprintf(buf,"hi_time: %s\n\r",tmp);  
+  dtostrf(hi_time_x,15,12,tmp);  
+  sprintf(buf,"hi_time_x: %s\n\r",tmp);  
   Serial.print(buf);
   
   cnt=0;
-
-  set_step_rate(step_rate, dir, 0);
+  
+  //set_step_rate(step_rate, dir, "X");
+  //set_step_rate(step_rate, dir, "Y");
+  //set_step_rate(step_rate, dir, "Z");
+  
   dir=!dir; // toggle the direction 
   
   sum_dt=0;
   for(int i=0;i<n_steps;i++){
     
-
-    dt_check_lo=isr_delay(hi_time+lo_time); // wait for lo_time seconds
     sum_dt=sum_dt+dt_check_hi+dt_check_lo;  // this is just a test of doing something in the loop
-                                            // the stepping is happening in the ISR
+                         // the stepping is happening in the ISR
     
     if (!(i%100)){                          // only publish to ROS about every 10 steps (10 main loops)
 
@@ -213,7 +250,6 @@ void loop() {
     }
     
   } 
-
   avg_dt=sum_dt/n_steps;  // calculate average step time
     
 //  dtostrf(avg_dt,10,7,tmp); // print for debug after traveling 
@@ -227,9 +263,8 @@ void loop() {
  // str_msg.data = hello;
  // chatter.publish( &str_msg );
  // nh.spinOnce();
-  //isr_delay(hi_time);
-//  delay(1000);  
-  //cnt++;
+ //  delay(1000);  
+ //cnt++;
 }
 
 
@@ -238,40 +273,63 @@ void loop() {
 // ********************************************************************************
 
 // function to home the xyz axes using the limit switches
-void home_axis(int axis){
+void home_axis(const char* axis){
 
-  enable_motors();
+  //enable_motors(axis);
 
-  set_travel_rate(10, 0, 0);
+  set_travel_rate(10, 0, axis);
 
   //while(PINA&0b00000100);
   while(PINC&0b00000100);
     
-  step_axis(500,10,1,0);
+  //step_axis(100,10,1,axis);
   
-  disable_motors();    
+  //disable_motors(axis); 
 
 }
 
 // function to move to axes by defined number of steps
 
-void step_axis(int steps, float travel_rate, bool direction, int axis){
+void step_axis(int steps, float travel_rate, bool direction, char *axis){
 
-  step_cnt=0;
-  set_travel_rate(travel_rate, direction, 0);
-
-  while (step_cnt<steps){
-    sprintf(buf,"step_cnt: %i\n\r",step_cnt);  
-    Serial.print(buf);
-  }
+  set_travel_rate(travel_rate, direction, axis);
+ 
+  /* 
+  if (strcmp(axis,"X")==0){
+    step_cnt_x=0;
+    while (step_cnt_x<steps){
+      //sprintf(buf,"step_cnt: %i\n\r",step_cnt_x);  
+      //Serial.print(buf);
+    }
+  }*/
   
-  disable_motors();
+  if (strcmp(axis,"Y")==0){
+    step_cnt_y=0;
+    while (step_cnt_y<steps){
+      //sprintf(buf,"step_cnt: %i\n\r",step_cnt_x);  
+      //Serial.print(buf);
+    }
+  }
+  /*
+  if (!strcmp(axis,"Z")==0){
+    step_cnt_z=0;
+    while (step_cnt_z<steps){
+      //sprintf(buf,"step_cnt: %i\n\r",step_cnt_x);  
+      //Serial.print(buf);
+    }
+  }*/
 
+//  while (step_cnt_x<steps){
+//    sprintf(buf,"step_cnt: %i\n\r",step_cnt_x);  
+//    Serial.print(buf);
+// }
+  
+ // disable_motors(axis);
 }
 
 
 // function to set the travel rate of a given axis
-void set_travel_rate(float travel_rate, bool direction, int axis){
+void set_travel_rate(float travel_rate, bool direction, char *axis){
  
   // float travel_rate = 20; // (mm/sec)
   float steps_per_mm= SPR/MMPR; //(steps/rev)/(mm/rev)->(steps/mm)
@@ -282,37 +340,76 @@ void set_travel_rate(float travel_rate, bool direction, int axis){
 
 
 // function to set the step rate and direction of a given axis, work in progress
-void set_step_rate(float step_rate, bool direction, int axis){
+void set_step_rate(float step_rate, bool direction, char *axis){
 
-  enable_motors();
+  //enable_motors(axis);
+
 
   //direction=true;
+  //step_time_x=0; // start the step timer
 
-  step_time=0; // start the step timer
-  
-  PORTB^=(-direction^PORTB)&(0b00100000); // set direction for PB5 
-  
+  if (strcmp(axis,"X")==0){  
+    PORTB^=(-direction^PORTB)&(0b00100000); // set direction with PB5 
+    step_time_x=0; // start the step timer
+  }
+
+  if (strcmp(axis,"Y")==0){  
+    PORTB^=(-direction^PORTB)&(0b10000000); // set direction with PB7 
+    step_time_y=0; // start the step timer
+  }
+
+  if (strcmp(axis,"Z")==0){  
+    PORTH^=(-direction^PORTH)&(0b01010000); // set direction with PH6,PH4 
+    step_time_z=0; // start the step timer
+  }
+
   // set the global time values to be used in ISR
-  hi_time=1/(step_rate/2); // time up in seconds
-  lo_time=1/(step_rate/2); // time up in seconds
+  hi_time_x=1/(step_rate/2); // time up in seconds
+  lo_time_x=1/(step_rate/2); // time up in seconds
 
+  hi_time_y=1/(step_rate/2); // time up in seconds
+  lo_time_y=1/(step_rate/2); // time up in seconds
+
+  hi_time_z=1/(step_rate/2); // time up in seconds
+  lo_time_z=1/(step_rate/2); // time up in seconds
 }
 
 
-void enable_motors(void){
+void enable_motors(char *axis){
 
-  DDRB=0b11110000; // set Port B PB7:4 outputs
-  DDRH=0b01100000; // set Port H PH6:5 to all outputs
-  PORTB = 0b00000000;
-  PORTH = 0b00000000;
+ //if (strcmp(axis,"X")!=0){
+ //   DDRH |= 0b01111000;
+ //}
+ if (strcmp(axis,"Y")==0){
+    DDRB |= 0b00110000; // set Port B PB7:4 outputs
+ }
+ if (strcmp(axis,"Z")==0){
+    DDRB |= 0b11000000; // set Port B PB7:4 outputs
+ }
+ 
+ //DDRH=0b11111000; // set Port H PH6:5 to all outputs
+  //PORTB = 0b00000000;
+  //PORTH = 0b00000000;
 
 }
 
-void disable_motors(void){
+void disable_motors(char *axis){
 
+  //if (!strcmp(axis,"X")){
+  //  DDRH &= 0b10000111;
+  // }
+  /*
+  if (strcmp(axis,"Y")!=0){
+    //DDRB &= 0b00111111;
+    DDRB = 0b00111111;
+  }
+  if (strcmp(axis,"Z")!=0){
+    DDRB &= 0b11001111;
+  }*/
   DDRB=0b00000000; // set Port B PB7:4 inputs
   DDRH=0b00000000; // set Port H PH6:5 to all inputs
 }
+
 
 
 // function to delay for specfied time using ISR fine timer, work in progress
@@ -321,14 +418,14 @@ float fine_delay(float duration){
   float prev_oftime, curr_oftime, prev_time, curr_time, dt;
   uint16_t curr_tcnt, prev_tcnt;
 
-  prev_oftime=oftime;
+  prev_oftime=oftime_x;
   prev_tcnt=TCNT1;   
   prev_time=prev_oftime+prev_tcnt*1/16000000.0;
 
   dt=-1; // force into the loop first time
   while (dt<duration){
 
-    curr_oftime=oftime;    
+    curr_oftime=oftime_x;    
     curr_tcnt=TCNT1;
 
     if (curr_tcnt>prev_tcnt){   // catch and fix fine timer roll over issue
@@ -343,7 +440,6 @@ float fine_delay(float duration){
   }
   
   return dt;
-
 }
 
 
@@ -351,13 +447,13 @@ float fine_delay(float duration){
 float coarse_delay(float duration){
 
   float prev_oftime, curr_oftime, prev_time, curr_time, dt;
-  prev_oftime=oftime;
+  prev_oftime=oftime_x;
   prev_time=prev_oftime;
 
   dt=-1; // force into the loop first time
   while (dt<duration){
 
-    curr_oftime=oftime;    
+    curr_oftime=oftime_x;    
 
     if (curr_oftime>=prev_oftime){   // catch and fix fine timer roll over issue
                                 // possibly polling before the ISR completes at tcnt1 rollover
@@ -393,10 +489,10 @@ float isr_delay(float duration){
 }
  
 
-// function to calculate current time
+// functiostepper_gantryn to calculate current time
 float get_time(void) {
  
-  return oftime+TCNT1*1.0/16000000.0;
+  return oftime_x+TCNT1*1.0/16000000.0;
 
 }
 
@@ -404,20 +500,61 @@ float get_time(void) {
 // Interrupt Routines
 // ********************************************************************************
 
-// timer1 overflow routine, used for general clock and step timer
+
+// timer1 overflow routine, used for general clock and step timer X (tmp Y)
+
 ISR(TIMER1_OVF_vect) {
 
-  ofcnt++; // increment the overflow counter
-  oftime=oftime+1.0/16000000.0*65536*prescale; // 1/16e6*65536
+  ofcnt_x++; // increment the overflow counter
+  oftime_x=oftime_x+1.0/16000000.0*65536*prescale; // 1/16e6*65536
 
-  step_time=step_time+1.0/16000000.0*65536*prescale;
-  if (step_time<=hi_time){
+  step_time_x=step_time_x+1.0/16000000.0*65536*prescale;
+  if (step_time_x<=hi_time_x){
+    //PORTH|=(1<<5)|(1<<3);
+    PORTH|=0b00101000; // bit 4 hi (bit 6 is z axis)
+  }else if(step_time_x<=hi_time_x+lo_time_x){
+    //PORTH&=~((1<<5)|(1<<3));
+    PORTH&=0b11010111; // bit 4 lo
+  }else{
+    step_time_x=0; // reset timer for next step
+    step_cnt_x++; // increment the global step counter for x axis
+  }
+
+}
+
+// timer3 overflow routine, used for step timer Y
+ISR(TIMER3_OVF_vect) {
+
+  ofcnt_y++; // increment the overflow counter
+  oftime_y=oftime_y+1.0/16000000.0*65536*prescale; // 1/16e6*65536
+
+  step_time_y=step_time_y+1.0/16000000.0*65536*prescale;
+  if (step_time_y<=hi_time_y){
     PORTB|=0b00010000; // bit 4 hi
-  }else if(step_time<=hi_time+lo_time){
+  }else if(step_time_y<=hi_time_y+lo_time_y){
     PORTB&=0b11101111; // bit 4 lo
   }else{
-    step_time=0; // reset timer for next step
-    step_cnt++; // increment the global step counter
+    step_time_y=0; // reset timer for next step
+    step_cnt_y++; // increment the global step counter for x axis
+  }
+
+}
+
+
+// timer5 overflow routine, used for step timer Z
+ISR(TIMER5_OVF_vect) {
+
+  ofcnt_z++; // increment the overflow counter
+  oftime_z=oftime_z+1.0/16000000.0*65536*prescale; // 1/16e6*65536
+
+  step_time_z=step_time_z+1.0/16000000.0*65536*prescale;
+  if (step_time_z<=hi_time_z){
+    PORTB|=0b01000000; // bit 4 hi (bit 6 is z axis)
+  }else if(step_time_z<=hi_time_z+lo_time_z){
+    PORTB&=0b10111111; // bit 4 lo
+  }else{
+    step_time_z=0; // reset timer for next step
+    step_cnt_z++; // increment the global step counter for x axis
   }
 
 }
