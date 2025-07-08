@@ -163,14 +163,13 @@ void loop() {
     
 
     dt_check_lo=isr_delay(hi_time+lo_time); // wait for lo_time seconds
-    sum_dt=sum_dt+dt_check_hi+dt_check_lo;
+    sum_dt=sum_dt+dt_check_hi+dt_check_lo;  // this is just a test of doing something in the loop
+                                            // the stepping is happening in the ISR
     
-    // publish every 10 steps  
-    if (!(i%100)){
+    if (!(i%100)){                          // only publish to ROS about every 10 steps (10 main loops)
 
-      sprintf(buf,"step i: %i\n\r",i);  
+      sprintf(buf,"step i: %i\n\r",i);      // printing is OK, but not too often
       Serial.print(buf);
-      
       Serial.println(PINA,BIN);     
  
      // dtostrf(dt_check_hi,15,12,tmp);  
@@ -225,8 +224,6 @@ void loop() {
   sprintf(buf,"curr_time: %s\n\n\r",tmp);  
   Serial.print(buf);
   
-  
-
  // str_msg.data = hello;
  // chatter.publish( &str_msg );
  // nh.spinOnce();
@@ -247,12 +244,12 @@ void home_axis(int axis){
 
   set_travel_rate(10, 0, 0);
 
-  while(PINA&0b00000100);
+  //while(PINA&0b00000100);
+  while(PINC&0b00000100);
     
   step_axis(500,10,1,0);
   
   disable_motors();    
-
 
 }
 
@@ -292,6 +289,7 @@ void set_step_rate(float step_rate, bool direction, int axis){
   //direction=true;
 
   step_time=0; // start the step timer
+  
   PORTB^=(-direction^PORTB)&(0b00100000); // set direction for PB5 
   
   // set the global time values to be used in ISR
