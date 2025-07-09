@@ -146,13 +146,22 @@ void setup() {
   
   enable_motors("Y");
   home_axis("Y");
-  disable_motors("Y");
+  //disable_motors("Y");
   delay(500);
 
+  sprintf(buf,"before calling step_axis()\n\r");   
+  Serial.print(buf);
+  delay(100);
+
   enable_motors("Y");
-  step_axis(20,10,1,"Y");
-  disable_motors("Y");
-  delay(500);
+  step_axis(100,10,1,"Y");
+  
+  sprintf(buf,"returned from step_axis()\n\r");  
+  Serial.print(buf);
+  delay(100);
+  
+  //disable_motors("Y");
+  //delay(500);
 
 }
 
@@ -178,22 +187,25 @@ void loop() {
   hi_time_z=1/(step_rate/2); // time up in seconds
   lo_time_z=1/(step_rate/2); // time up in seconds
   
-  sprintf(buf,"dir: %i\n\r",dir);  
+  sprintf(buf,"top of loop()");  
   Serial.print(buf);
+  delay(100);
+  //sprintf(buf,"dir: %i\n\r",dir);  
+  //Serial.print(buf);
 
-  sprintf(buf,"n_steps: %i\n\n\r", n_steps);  
-  Serial.print(buf);
+  //sprintf(buf,"n_steps: %i\n\n\r", n_steps);  
+  //Serial.print(buf);
   
-  dtostrf(hi_time_x,15,12,tmp);  
-  sprintf(buf,"hi_time_x: %s\n\r",tmp);  
-  Serial.print(buf);
+  //dtostrf(hi_time_x,15,12,tmp);  
+  //sprintf(buf,"hi_time_x: %s\n\r",tmp);  
+  //Serial.print(buf);
   
   cnt=0;
   
   //set_step_rate(step_rate, dir, "X");
   //set_step_rate(step_rate, dir, "Y");
   //set_step_rate(step_rate, dir, "Z");
-  
+  /* 
   dir=!dir; // toggle the direction 
   
   sum_dt=0;
@@ -202,7 +214,7 @@ void loop() {
     sum_dt=sum_dt+dt_check_hi+dt_check_lo;  // this is just a test of doing something in the loop
                          // the stepping is happening in the ISR
     
-    if (!(i%100)){                          // only publish to ROS about every 10 steps (10 main loops)
+    if (!(i%10)){                          // only publish to ROS about every 10 steps (10 main loops)
 
       sprintf(buf,"step i: %i\n\r",i);      // printing is OK, but not too often
       Serial.print(buf);
@@ -254,10 +266,10 @@ void loop() {
 //  dtostrf(avg_dt,10,7,tmp); // print for debug after traveling 
 //  sprintf(buf,"\n\ravg_dt: %s\n\r",tmp);  
 //  Serial.print(buf);
-
-  dtostrf(get_time(),10,7,tmp);
-  sprintf(buf,"curr_time: %s\n\n\r",tmp);  
-  Serial.print(buf);
+  */
+ // dtostrf(get_time(),10,7,tmp);
+ // sprintf(buf,"curr_time: %s\n\n\r",tmp);  
+ // Serial.print(buf);
   
  // str_msg.data = hello;
  // chatter.publish( &str_msg );
@@ -281,9 +293,12 @@ void home_axis(char* axis){
   //while(PINA&0b00000100);
   while(PINC&0b00000100);
     
-  //step_axis(100,10,1,axis);
+  //step_axis(20,10,1,axis);
   
   //disable_motors(axis); 
+  DDRB=0b00000000; // set Port B PB7:4 inputs
+  DDRH=0b00000000; // set Port H PH6:5 to all inputs
+  //disable_motors(axis);
 
 }
 
@@ -293,14 +308,13 @@ void step_axis(int steps, float travel_rate, int direction, char *axis){
 
   set_travel_rate(travel_rate, direction, axis);
  
-  /* 
   if (strcmp(axis,"X")==0){
     step_cnt_x=0;
     while (step_cnt_x<steps){
       //sprintf(buf,"step_cnt: %i\n\r",step_cnt_x);  
       //Serial.print(buf);
     }
-  }*/
+  }
   
   if (strcmp(axis,"Y")==0){
     step_cnt_y=0;
@@ -309,28 +323,24 @@ void step_axis(int steps, float travel_rate, int direction, char *axis){
       Serial.print(buf);
     }
   }
-  /*
-  if (!strcmp(axis,"Z")==0){
+  
+  if (strcmp(axis,"Z")==0){
     step_cnt_z=0;
     while (step_cnt_z<steps){
       //sprintf(buf,"step_cnt: %i\n\r",step_cnt_x);  
       //Serial.print(buf);
     }
-  }*/
-
-//  while (step_cnt_x<steps){
-//    sprintf(buf,"step_cnt: %i\n\r",step_cnt_x);  
-//    Serial.print(buf);
-// }
-  
- // disable_motors(axis);
+  }
+  // disable the motors
+  DDRB=0b00000000; // set Port B PB7:4 inputs
+  DDRH=0b00000000; // set Port H PH6:5 to all inputs
+  //disable_motors(axis);
 }
 
 
 // function to set the travel rate of a given axis
 void set_travel_rate(float travel_rate, int direction, char *axis){
  
-  // float travel_rate = 20; // (mm/sec)
   float steps_per_mm= SPR/MMPR; //(steps/rev)/(mm/rev)->(steps/mm)
   float step_rate=travel_rate*steps_per_mm; //(mm/sec)*(steps/mm)->(steps/sec)
 
@@ -341,8 +351,6 @@ void set_travel_rate(float travel_rate, int direction, char *axis){
 // function to set the step rate and direction of a given axis, work in progress
 void set_step_rate(float step_rate, int direction, char *axis){
 
-  //enable_motors(axis);
-  
   bool tmp;
   
   if (direction>0){ // this is a bit of a hack, casting signed int to bool for direction bit
@@ -380,11 +388,12 @@ void set_step_rate(float step_rate, int direction, char *axis){
 
 void enable_motors(char *axis){
 
- //if (strcmp(axis,"X")!=0){
- //   DDRH |= 0b01111000;
- //}
+ if (strcmp(axis,"X")==0){
+    DDRH |= 0b01111000;
+ }
  if (strcmp(axis,"Y")==0){
     DDRB |= 0b00110000; // set Port B PB7:4 outputs
+    //TIMSK3=0b00000001;
  }
  if (strcmp(axis,"Z")==0){
     DDRB |= 0b11000000; // set Port B PB7:4 outputs
@@ -411,8 +420,9 @@ void disable_motors(char *axis){
   }*/
   DDRB=0b00000000; // set Port B PB7:4 inputs
   DDRH=0b00000000; // set Port H PH6:5 to all inputs
+  //PORTB=0b11110000;
+  //TIMSK3=0;
 }
-
 
 
 // function to delay for specfied time using ISR fine timer, work in progress
