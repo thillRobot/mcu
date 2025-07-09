@@ -33,7 +33,7 @@
 
 int dt, cnt;
 //bool dir; 
-int dir;
+//int dir;
 
 int c_time=0;
 //volatile uint16_t ofcnt=0;
@@ -107,8 +107,8 @@ void setup() {
   PORTH = 0b00000000;
  
   cnt=0; // counter for loop()
-  dir=1; // direction to step
-  dt=5;  // time delay between steps (micro seconds)
+  //dir=1; // direction to step
+  //dt=5;  // time delay between steps (micro seconds)
 
   // setup Timer 1 (16bit), X axis steppers in ISR1
   TCCR1A  = 0b00000000; 
@@ -131,20 +131,21 @@ void setup() {
   nh.advertise(chatter);
 
   // on board led for testing, replace pinmode fn soon
-  pinMode(13, OUTPUT);
+  //pinMode(13, OUTPUT);
   nh.subscribe(sub);
   
   // setup portA for limit switches 0,1
-  DDRA=0b00000011; // bits 0,1 output for sw voltage, 2-7 inputs for sw detect
+  DDRA  =0b00000011; // bits 0,1 output for sw voltage, 2-7 inputs for sw detect
+  //PORTA&=0b11111100; // bits 0,1 low for sw active state low
   PORTA|=0b11111100; // internal pullups on bits 2-7
   // setup PORTC for limit switche 2
 
-  DDRC=0b00000011; // bits 0,1 output for sw voltage, 2-7 inputs for sw detect
+  DDRC  =0b00000011; // bits 0,1 output for sw voltage, 2-7 inputs for sw detect
+  //PORTC&=0b11111100; // bits 0,1 low for sw active state low
   PORTC|=0b11111100; // internal pullups on bits 2-7
-
+  
   delay(100);
-  
-  
+
   enable_motors("X");
   home_axis("X");
   enable_motors("X");
@@ -194,9 +195,10 @@ void loop() {
   hi_time_z=1/(step_rate/2); // time up in seconds
   lo_time_z=1/(step_rate/2); // time up in seconds
   
-  sprintf(buf,"top of loop()\n\r");  
-  Serial.print(buf);
+  //sprintf(buf,"top of loop()\n\r");  
+  //Serial.print(buf);
   delay(100);
+  
   //sprintf(buf,"dir: %i\n\r",dir);  
   //Serial.print(buf);
 
@@ -212,8 +214,7 @@ void loop() {
   //set_step_rate(step_rate, dir, "X");
   //set_step_rate(step_rate, dir, "Y");
   //set_step_rate(step_rate, dir, "Z");
-  /* 
-  dir=!dir; // toggle the direction 
+  //dir=!dir; // toggle the direction 
   
   sum_dt=0;
   for(int i=0;i<n_steps;i++){
@@ -223,9 +224,9 @@ void loop() {
     
     if (!(i%10)){                          // only publish to ROS about every 10 steps (10 main loops)
 
-      sprintf(buf,"step i: %i\n\r",i);      // printing is OK, but not too often
-      Serial.print(buf);
-      Serial.println(PINA,BIN);     
+     // sprintf(buf,"step i: %i\n\r",i);      // printing is OK, but not too often
+     // Serial.print(buf);
+     // Serial.println(PINA,BIN);     
  
      // dtostrf(dt_check_hi,15,12,tmp);  
      // sprintf(buf,"dt_check_hi: %s\n\r",tmp);  
@@ -247,7 +248,6 @@ void loop() {
       dtostrf(get_time(),10,7,tmp);
       sprintf(buf,"sw0 active at curr_time: %s\n\n\r",tmp);  
       Serial.print(buf);
-    
       Serial.println(PINA,BIN);     
     }
     if (!(PINA&0b00001000)){
@@ -255,7 +255,6 @@ void loop() {
       dtostrf(get_time(),10,7,tmp);
       sprintf(buf,"sw1 active at curr_time: %s\n\n\r",tmp);  
       Serial.print(buf);
-    
       Serial.println(PINA,BIN);     
     }
     if (!(PINC&0b00000100)){
@@ -263,17 +262,23 @@ void loop() {
       dtostrf(get_time(),10,7,tmp);
       sprintf(buf,"sw2 active at curr_time: %s\n\n\r",tmp);  
       Serial.print(buf);
-    
+      Serial.println(PINC,BIN);     
+    }
+    if (!(PINC&0b00001000)){
+      
+      dtostrf(get_time(),10,7,tmp);
+      sprintf(buf,"sw3 active at curr_time: %s\n\n\r",tmp);  
+      Serial.print(buf);
       Serial.println(PINC,BIN);     
     }
     
   } 
   avg_dt=sum_dt/n_steps;  // calculate average step time
     
-//  dtostrf(avg_dt,10,7,tmp); // print for debug after traveling 
-//  sprintf(buf,"\n\ravg_dt: %s\n\r",tmp);  
-//  Serial.print(buf);
-  */
+ //  dtostrf(avg_dt,10,7,tmp); // print for debug after traveling 
+ //  sprintf(buf,"\n\ravg_dt: %s\n\r",tmp);  
+ //  Serial.print(buf);
+  
  // dtostrf(get_time(),10,7,tmp);
  // sprintf(buf,"curr_time: %s\n\n\r",tmp);  
  // Serial.print(buf);
@@ -283,6 +288,7 @@ void loop() {
  // nh.spinOnce();
  //  delay(1000);  
  //cnt++;
+
 }
 
 
@@ -293,20 +299,24 @@ void loop() {
 // function to home the xyz axes using the limit switches
 void home_axis(char* axis){
 
-  //enable_motors(axis);
+  //enable_motors(axis); // enable is currenty used outside of fn
 
-  set_travel_rate(10, 0, axis);
+  set_travel_rate(10, -1, axis);
 
-  //while(PINA&0b00000100);
-    
   if (strcmp(axis,"X")==0){
-    while(PINA&0b00000100);
+    while(PINA&0b00000100){
+      Serial.println(PINA,BIN); // these prints in the delays seem to matter, fix this later     
+    }
   }
   if (strcmp(axis,"Y")==0){
-    while(PINC&0b00000100);
+    while(PINC&0b00000100){
+      Serial.println(PINC,BIN);     
+    }
   }
   if (strcmp(axis,"Z")==0){
-    while(PINC&0b00000100);
+    while(PINC&0b00001000){
+      Serial.println(PINC,BIN);     
+    }
   }
   //step_axis(20,10,1,axis);
   
@@ -341,7 +351,7 @@ void step_axis(int steps, float travel_rate, int direction, char *axis){
   if (strcmp(axis,"Z")==0){
     step_cnt_z=0;
     while (step_cnt_z<steps){
-      sprintf(buf,"step_cnt: %i\n\r",step_cnt_x);  
+      sprintf(buf,"step_cnt: %i\n\r",step_cnt_z);  
       Serial.print(buf);
     }
   }
@@ -383,7 +393,8 @@ void set_step_rate(float step_rate, int direction, char *axis){
     step_time_y=0; // start the step timer
   }
 
-  if (strcmp(axis,"Z")==0){  
+  if (strcmp(axis,"Z")==0){
+    tmp=!tmp;  
     PORTB^=(-tmp^PORTB)&(0b10000000); // set Z axis direction with PB5 
     step_time_z=0; // start the step timer
   }
