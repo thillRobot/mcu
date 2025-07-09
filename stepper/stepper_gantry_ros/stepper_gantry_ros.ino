@@ -156,21 +156,18 @@ void setup() {
   enable_motors("Y");
   step_axis(100,10,1,"Y");
   
-  sprintf(buf,"returned from step_axis()\n\r");  
-  Serial.print(buf);
-  delay(100);
-   
   enable_motors("Z");
   home_axis("Z");
   enable_motors("Z");
   step_axis(100,10,1,"Z");
   
-  sprintf(buf,"returned from step_axis() again\n\r");  
-  Serial.print(buf);
   delay(100);
-  //disable_motors("Y");
-  //delay(500);
 
+  enable_motors("Y");
+  travel_axis(50,10,1,"Y");
+  
+  enable_motors("Z");
+  travel_axis(90,10,1,"Z");
 }
 
 void loop() {
@@ -326,8 +323,19 @@ void home_axis(char* axis){
 
 }
 
-// function to move to axes by defined number of steps
 
+// function to move an axes by a travel distance in mm 
+void travel_axis(float travel, float travel_rate, int direction, char* axis){
+
+  float steps_per_mm= SPR/MMPR; //(steps/rev)/(mm/rev)->(steps/mm)
+  float steps=travel*steps_per_mm; //(mm/sec)*(steps/mm)->(steps/sec)
+
+  step_axis(steps, travel_rate, direction, axis);
+
+}
+
+
+// function to move to axes by defined number of steps
 void step_axis(int steps, float travel_rate, int direction, char *axis){
 
   set_travel_rate(travel_rate, direction, axis);
@@ -362,7 +370,7 @@ void step_axis(int steps, float travel_rate, int direction, char *axis){
 }
 
 
-// function to set the travel rate of a given axis
+// function to set the travel rate in mm/s of a given axis
 void set_travel_rate(float travel_rate, int direction, char *axis){
  
   float steps_per_mm= SPR/MMPR; //(steps/rev)/(mm/rev)->(steps/mm)
