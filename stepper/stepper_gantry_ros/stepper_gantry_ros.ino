@@ -32,7 +32,8 @@
 #define MMPR 10 // mm travel per revolution, (mm/rev)
 
 int dt, cnt;
-bool dir; 
+//bool dir; 
+int dir;
 
 int c_time=0;
 //volatile uint16_t ofcnt=0;
@@ -96,7 +97,7 @@ ros::Publisher chatter("chatter", &str_msg);
 
 char hello[13] = "hello world!";
 
-// the setup PORTH&=~((1<<5)|(1<<3));function runs once when you press reset or power the board
+// the setup function runs once when you press reset or power the board
 void setup() {
 
   motors_enabled=false;  
@@ -109,17 +110,17 @@ void setup() {
   dir=1; // direction to step
   dt=5;  // time delay between steps (micro seconds)
 
-  // setup Timer 1 (16bit)
+  // setup Timer 1 (16bit), X axis steppers in ISR1
   TCCR1A  = 0b00000000; 
   TCCR1B  = 0b00000001; //timer prescale = 1 (no prescale)
   TIMSK1  = 0b00000001; // overflow interrupt enable 
   
-  // setup Timer 3 (16bit)
+  // setup Timer 3 (16bit), Y axis stepper in ISR3
   TCCR3A  = 0b00000000; 
   TCCR3B  = 0b00000001; //timer prescale = 1 (no prescale)
   TIMSK3  = 0b00000001; // overflow interrupt enable 
   
-  // setup Timer 5 (16bit)
+  // setup Timer 5 (16bit), Z axis stepper in ISR5
   TCCR5A  = 0b00000000; 
   TCCR5B  = 0b00000001; //timer prescale = 1 (no prescale)
   TIMSK5  = 0b00000001; // overflow interrupt enable 
@@ -142,16 +143,14 @@ void setup() {
   PORTC|=0b11111100; // internal pullups on bits 2-7
 
   delay(100);
-  //disable_motors("X");
-  //disable_motors("Z");
-  //enable_motors("X");
+  
   enable_motors("Y");
   home_axis("Y");
   disable_motors("Y");
   delay(500);
 
   enable_motors("Y");
-  step_axis(20,10,0,"Y");
+  step_axis(20,10,1,"Y");
   disable_motors("Y");
   delay(500);
 
@@ -273,7 +272,7 @@ void loop() {
 // ********************************************************************************
 
 // function to home the xyz axes using the limit switches
-void home_axis(const char* axis){
+void home_axis(char* axis){
 
   //enable_motors(axis);
 
@@ -290,7 +289,7 @@ void home_axis(const char* axis){
 
 // function to move to axes by defined number of steps
 
-void step_axis(int steps, float travel_rate, bool direction, char *axis){
+void step_axis(int steps, float travel_rate, int direction, char *axis){
 
   set_travel_rate(travel_rate, direction, axis);
  
@@ -306,8 +305,8 @@ void step_axis(int steps, float travel_rate, bool direction, char *axis){
   if (strcmp(axis,"Y")==0){
     step_cnt_y=0;
     while (step_cnt_y<steps){
-      //sprintf(buf,"step_cnt: %i\n\r",step_cnt_x);  
-      //Serial.print(buf);
+      sprintf(buf,"step_cnt_y: %i\n\r",step_cnt_y);  
+      Serial.print(buf);
     }
   }
   /*
@@ -329,7 +328,7 @@ void step_axis(int steps, float travel_rate, bool direction, char *axis){
 
 
 // function to set the travel rate of a given axis
-void set_travel_rate(float travel_rate, bool direction, char *axis){
+void set_travel_rate(float travel_rate, int direction, char *axis){
  
   // float travel_rate = 20; // (mm/sec)
   float steps_per_mm= SPR/MMPR; //(steps/rev)/(mm/rev)->(steps/mm)
@@ -340,26 +339,30 @@ void set_travel_rate(float travel_rate, bool direction, char *axis){
 
 
 // function to set the step rate and direction of a given axis, work in progress
-void set_step_rate(float step_rate, bool direction, char *axis){
+void set_step_rate(float step_rate, int direction, char *axis){
 
   //enable_motors(axis);
-
-
-  //direction=true;
-  //step_time_x=0; // start the step timer
+  
+  bool tmp;
+  
+  if (direction>0){ // this is a bit of a hack, casting signed int to bool for direction bit
+    tmp=true;       // there is a probably a cleaner way but this will work for now
+  }else{
+    tmp=false;
+  }
 
   if (strcmp(axis,"X")==0){  
-    PORTB^=(-direction^PORTB)&(0b00100000); // set direction with PB5 
-    step_time_x=0; // start the step timer
+    PORTH^=(-tmp^PORTH)&(0b01010000); // set X axis direction with PH6,PH4 
+    step_time_x=0; // start the step timer 
   }
 
   if (strcmp(axis,"Y")==0){  
-    PORTB^=(-direction^PORTB)&(0b10000000); // set direction with PB7 
+    PORTB^=(-tmp^PORTB)&(0b00100000); // set Y axis direction with PB7 
     step_time_y=0; // start the step timer
   }
 
   if (strcmp(axis,"Z")==0){  
-    PORTH^=(-direction^PORTH)&(0b01010000); // set direction with PH6,PH4 
+    PORTB^=(-tmp^PORTB)&(0b10000000); // set Z axis direction with PB5 
     step_time_z=0; // start the step timer
   }
 
@@ -387,7 +390,7 @@ void enable_motors(char *axis){
     DDRB |= 0b11000000; // set Port B PB7:4 outputs
  }
  
- //DDRH=0b11111000; // set Port H PH6:5 to all outputs
+  //DDRH=0b11111000; // set Port H PH6:5 to all outputs
   //PORTB = 0b00000000;
   //PORTH = 0b00000000;
 
