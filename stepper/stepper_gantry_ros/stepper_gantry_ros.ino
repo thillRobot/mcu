@@ -144,22 +144,29 @@ void setup() {
 
   delay(100);
   
+  
+  enable_motors("X");
+  home_axis("X");
+  enable_motors("X");
+  step_axis(100,10,1,"X");
+  
   enable_motors("Y");
   home_axis("Y");
-  //disable_motors("Y");
-  delay(500);
-
-  sprintf(buf,"before calling step_axis()\n\r");   
-  Serial.print(buf);
-  delay(100);
-
   enable_motors("Y");
   step_axis(100,10,1,"Y");
   
   sprintf(buf,"returned from step_axis()\n\r");  
   Serial.print(buf);
   delay(100);
+   
+  enable_motors("Z");
+  home_axis("Z");
+  enable_motors("Z");
+  step_axis(100,10,1,"Z");
   
+  sprintf(buf,"returned from step_axis() again\n\r");  
+  Serial.print(buf);
+  delay(100);
   //disable_motors("Y");
   //delay(500);
 
@@ -187,7 +194,7 @@ void loop() {
   hi_time_z=1/(step_rate/2); // time up in seconds
   lo_time_z=1/(step_rate/2); // time up in seconds
   
-  sprintf(buf,"top of loop()");  
+  sprintf(buf,"top of loop()\n\r");  
   Serial.print(buf);
   delay(100);
   //sprintf(buf,"dir: %i\n\r",dir);  
@@ -291,14 +298,21 @@ void home_axis(char* axis){
   set_travel_rate(10, 0, axis);
 
   //while(PINA&0b00000100);
-  while(PINC&0b00000100);
     
+  if (strcmp(axis,"X")==0){
+    while(PINA&0b00000100);
+  }
+  if (strcmp(axis,"Y")==0){
+    while(PINC&0b00000100);
+  }
+  if (strcmp(axis,"Z")==0){
+    while(PINC&0b00000100);
+  }
   //step_axis(20,10,1,axis);
   
   //disable_motors(axis); 
   DDRB=0b00000000; // set Port B PB7:4 inputs
   DDRH=0b00000000; // set Port H PH6:5 to all inputs
-  //disable_motors(axis);
 
 }
 
@@ -311,8 +325,8 @@ void step_axis(int steps, float travel_rate, int direction, char *axis){
   if (strcmp(axis,"X")==0){
     step_cnt_x=0;
     while (step_cnt_x<steps){
-      //sprintf(buf,"step_cnt: %i\n\r",step_cnt_x);  
-      //Serial.print(buf);
+      sprintf(buf,"step_cnt: %i\n\r",step_cnt_x);  
+      Serial.print(buf);
     }
   }
   
@@ -327,8 +341,8 @@ void step_axis(int steps, float travel_rate, int direction, char *axis){
   if (strcmp(axis,"Z")==0){
     step_cnt_z=0;
     while (step_cnt_z<steps){
-      //sprintf(buf,"step_cnt: %i\n\r",step_cnt_x);  
-      //Serial.print(buf);
+      sprintf(buf,"step_cnt: %i\n\r",step_cnt_x);  
+      Serial.print(buf);
     }
   }
   // disable the motors
@@ -393,16 +407,11 @@ void enable_motors(char *axis){
  }
  if (strcmp(axis,"Y")==0){
     DDRB |= 0b00110000; // set Port B PB7:4 outputs
-    //TIMSK3=0b00000001;
  }
  if (strcmp(axis,"Z")==0){
     DDRB |= 0b11000000; // set Port B PB7:4 outputs
  }
  
-  //DDRH=0b11111000; // set Port H PH6:5 to all outputs
-  //PORTB = 0b00000000;
-  //PORTH = 0b00000000;
-
 }
 
 void disable_motors(char *axis){
@@ -421,7 +430,6 @@ void disable_motors(char *axis){
   DDRB=0b00000000; // set Port B PB7:4 inputs
   DDRH=0b00000000; // set Port H PH6:5 to all inputs
   //PORTB=0b11110000;
-  //TIMSK3=0;
 }
 
 
