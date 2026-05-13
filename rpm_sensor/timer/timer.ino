@@ -3,6 +3,18 @@
 #include <LiquidCrystal_I2C.h>
 #include "SAMDTimerInterrupt.h"
 
+#define INTERRUPT_CORE_SAMD
+
+#include "SAMD_PWM.h"
+
+// Define a valid hardware PWM pin (e.g., Pin 2)
+const int pinPWM = 2; 
+float frequency = 100.0; // Target frequency in Hz
+float dutyCycle = 1.0;  // 5% duty cycle (Common for 50Hz RC Servos)
+
+SAMD_PWM* PWM_Instance;
+
+
 //#include Wire.h
 
 
@@ -14,7 +26,7 @@
 //the second parameter is how many rows are on your screen
 
 //the  third parameter is how many columns are on your screen
-LiquidCrystal_I2C lcd(0x27,  16, 2);
+LiquidCrystal_I2C lcd(0x27,  20, 4);
 
 const int buttonPin = 1; // Pin 1 is used here
 volatile bool state = LOW;
@@ -43,7 +55,7 @@ void blinkISR() {
   if (isProcessing) return; // Ignore if already processing
   isProcessing = true;
 
-  for (int i=0;i<500;i++); // tiny debouncing delay 
+  //for (int i=0;i<500;i++); // tiny debouncing delay 
 
   uint32_t portA = REG_PORT_IN0;
   bool pin1State = (portA >> 1) & 1; // True if HIGH, False if LOW    
@@ -66,49 +78,59 @@ void setup() {
 
   pinMode(LED_BUILTIN, OUTPUT);
 
-  // Initialize timer with 500ms interval
- if (ITimer.attachInterruptInterval(500 * 1000, TimerHandler)) {
-   Serial.println("Starting ITimer OK");
- } else {
-   Serial.println("Can't set ITimer. Select another timer.");
- }
+// // Initialize timer with 500ms interval
+if (ITimer.attachInterruptInterval(1000 * 1000, TimerHandler)) {
+  Serial.println("Starting ITimer OK");
+} else {
+  Serial.println("Can't set ITimer. Select another timer.");
+}
 
  //pinMode(buttonPin, INPUT_PULLUP);
  pinMode(buttonPin, INPUT);
   // Attach interrupt: call blinkISR when button goes from high to low
  attachInterrupt(digitalPinToInterrupt(buttonPin), blinkISR, RISING);   
 
- //pinMode(1, INPUT);    
+//int pwmPin = 2; // Example PWM pin
+ // pinMode(pwmPin, OUTPUT);
 
-}
+ // Create instance: Pin, Frequency, Duty Cycle
+  PWM_Instance = new SAMD_PWM(pinPWM, frequency, dutyCycle);
 
+  if (PWM_Instance) {
+    PWM_Instance->setPWM();
+  }
+
+}                
 unsigned long lastRun;
 
 void loop() {
   
+  // Set duty cycle to 50% (128/255)
+  //analogWrite(2, 128); 
 //wait  for a second
-  
+   
   if (millis() - lastRun >= 1000) {
   lastRun = millis();
   // do something
   //}
-
+  
   lcd.clear(); 
 // tell the screen to write on the top row
-  lcd.setCursor(0,0);
+//  lcd.setCursor(0,0);
   
 // tell the screen to write “hello, from” on the top  row
-//  lcd.print("Hello, From");
+//  lcd.print("RPM Sensor");
   
 // tell the screen to write on the bottom  row
+  lcd.setCursor(0,0);
+  lcd.print("Pulses per second:" );
   lcd.setCursor(0,1);
-  lcd.print(isr_cnt);
-  
-  lcd.setCursor(0,2);
   lcd.print(isr_freq);
-// tell the screen to write “Arduino_uno_guy”  on the bottom row
-  
-// you can change whats in the quotes to be what you want  it to be!
-// lcd.print("Arduino_uno_guy");
+  lcd.setCursor(0,2);
+  lcd.print("RPM: " );
+  lcd.setCursor(0,3);
+  float RPM=isr_freq*60;
+  lcd.print(RPM);
   }
+ 
 }
